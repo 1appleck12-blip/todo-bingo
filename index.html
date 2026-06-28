@@ -565,11 +565,11 @@
     flashSaveStatus._t = setTimeout(() => { saveStatus.textContent = ''; }, 1400);
   }
 
-  async function loadState(){
+  function loadState(){
     try{
-      const result = await window.storage.get(STORAGE_KEY, false);
-      if(result && result.value){
-        const parsed = JSON.parse(result.value);
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(raw){
+        const parsed = JSON.parse(raw);
         if(Array.isArray(parsed) && parsed.length === 9){
           parsed.forEach((d, i) => { cellsData[i].text = d.text || ''; cellsData[i].done = !!d.done; });
         }
@@ -580,9 +580,9 @@
     rerenderAll({skipToast:true, skipSave:true});
   }
 
-  async function saveState(){
+  function saveState(){
     try{
-      await window.storage.set(STORAGE_KEY, JSON.stringify(cellsData), false);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cellsData));
       flashSaveStatus('保存しました');
     }catch(err){
       flashSaveStatus('保存できませんでした');
