@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>やることビンゴ</title>
+<title>やることノート</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <meta name="theme-color" content="#2C3C63">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="やることビンゴ">
+<meta name="apple-mobile-web-app-title" content="やることノート">
 <link rel="apple-touch-icon" id="appleIcon">
 <link rel="manifest" id="manifestLink">
 <script>
@@ -23,8 +23,8 @@
     document.getElementById('appleIcon').setAttribute('href', iconDataUri);
 
     const manifest = {
-      name: 'やることビンゴ',
-      short_name: 'ビンゴ',
+      name: 'やることノート',
+      short_name: 'ノート',
       start_url: '.',
       display: 'standalone',
       background_color: '#F7F2E7',
@@ -135,9 +135,237 @@
     margin:0;
   }
 
+  .tabbar{
+    display:flex;
+    gap:6px;
+    margin-bottom:22px;
+    overflow-x:auto;
+    padding-bottom:2px;
+    -ms-overflow-style:none;
+    scrollbar-width:none;
+  }
+
+  .tabbar::-webkit-scrollbar{ display:none; }
+
+  .tab-btn{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    white-space:nowrap;
+    flex:none;
+    padding:8px 16px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:transparent;
+    color:var(--ink-soft);
+    cursor:pointer;
+    transition:background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.15s ease;
+  }
+
+  .tab-btn.active{
+    background:var(--indigo);
+    border-color:var(--indigo);
+    color:var(--paper);
+  }
+
+  .tab-btn:active{
+    transform:scale(0.94);
+  }
+
+  .tab-panel{
+    display:none;
+  }
+
+  .tab-panel.active{
+    display:block;
+  }
+
+  .panel-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:14px;
+  }
+
+  .panel-title{
+    font-family:'Shippori Mincho', serif;
+    font-weight:700;
+    font-size:18px;
+  }
+
+  .todo-input-row{
+    display:flex;
+    gap:8px;
+    margin-bottom:14px;
+  }
+
+  .todo-input-row input{
+    flex:1;
+    min-width:0;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:10px 12px;
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    font-size:14px;
+    background:#fffdf8;
+    outline:none;
+    color:var(--ink);
+  }
+
+  .todo-input-row input:focus{
+    border-color:var(--indigo-soft);
+  }
+
+  .add-btn{
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    color:var(--paper);
+    background:var(--indigo);
+    border:none;
+    border-radius:8px;
+    padding:0 16px;
+    cursor:pointer;
+    flex:none;
+    transition:transform 0.15s ease;
+  }
+
+  .add-btn:active{
+    transform:scale(0.93);
+  }
+
+  .todo-list{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    min-height:8px;
+  }
+
+  .todo-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:#fffdf8;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:8px 10px;
+    transition:border-color 0.2s ease;
+  }
+
+  .todo-row.done{
+    border-color:#e2d9be;
+  }
+
+  .todo-stamp-wrap{
+    width:30px;
+    height:30px;
+    flex:none;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .stamp-btn.small{
+    position:static;
+    width:24px;
+    height:24px;
+    margin:0;
+    font-size:10px;
+  }
+
+  .stamp-mark.small{
+    position:static;
+    width:30px;
+    height:30px;
+    margin:0;
+    font-size:13px;
+  }
+
+  .todo-text{
+    flex:1;
+    font-size:13px;
+    line-height:1.5;
+    word-break:break-word;
+  }
+
+  .todo-row.done .todo-text{
+    color:var(--ink-soft);
+    text-decoration:line-through;
+    text-decoration-color:var(--vermillion-soft);
+  }
+
+  .todo-del{
+    flex:none;
+    width:26px;
+    height:26px;
+    border-radius:50%;
+    border:none;
+    background:none;
+    color:var(--ink-soft);
+    font-size:16px;
+    line-height:1;
+    cursor:pointer;
+    transition:color 0.15s ease, transform 0.15s ease;
+  }
+
+  .todo-del:hover{
+    color:var(--vermillion);
+  }
+
+  .todo-del:active{
+    transform:scale(0.85);
+  }
+
+  .todo-empty-hint{
+    font-size:12px;
+    color:var(--ink-soft);
+    text-align:center;
+    padding:24px 0;
+    opacity:0.65;
+  }
+
+  .todo-footer-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:14px;
+  }
+
+  .todo-count{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--ink-soft);
+  }
+
   .board-wrap{
     position:relative;
-    margin-top:24px;
+    margin-top:4px;
+  }
+
+  .size-switcher{
+    display:flex;
+    gap:6px;
+    margin-bottom:14px;
+  }
+
+  .size-btn{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    padding:5px 14px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:transparent;
+    color:var(--ink-soft);
+    cursor:pointer;
+    transition:background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.15s ease;
+  }
+
+  .size-btn.active{
+    background:var(--indigo);
+    border-color:var(--indigo);
+    color:var(--paper);
+  }
+
+  .size-btn:active{
+    transform:scale(0.92);
   }
 
   .board{
@@ -395,29 +623,111 @@
   <header>
     <div class="header-row">
       <span class="eyebrow" id="dateLabel"></span>
-      <div class="bingo-badge">ビンゴ <span class="count" id="bingoCount">0</span></div>
     </div>
-    <h1>やることビンゴ</h1>
-    <p class="subtitle">マスに予定を書き込み、終わったら印を押す。縦・横・斜めが揃うとビンゴ。</p>
+    <h1>やることノート</h1>
+    <p class="subtitle">タブを切り替えて、ビンゴ・今日・今週・今月・今年のやることを記録する。印を押すと達成感が残る。</p>
   </header>
 
-  <div class="board-wrap">
-    <div class="board" id="board"></div>
-    <svg class="lines-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" id="linesSvg"></svg>
-  </div>
+  <nav class="tabbar" id="tabbar">
+    <button class="tab-btn active" data-tab="bingo">ビンゴ</button>
+    <button class="tab-btn" data-tab="daily">Daily</button>
+    <button class="tab-btn" data-tab="weekly">Weekly</button>
+    <button class="tab-btn" data-tab="monthly">Monthly</button>
+    <button class="tab-btn" data-tab="yearly">Yearly</button>
+  </nav>
 
-  <footer>
-    <button class="reset-btn" id="resetBtn">盤面をリセット</button>
-    <p class="save-note"><span id="saveStatus"></span></p>
-    <p class="install-note">スマホのChromeで開いて、右上のメニューから「ホーム画面に追加」を選ぶとアプリのように開けます</p>
-  </footer>
+  <section class="tab-panel active" id="panel-bingo">
+    <div class="panel-header">
+      <span class="panel-title">ビンゴ</span>
+      <div class="bingo-badge">ビンゴ <span class="count" id="bingoCount">0</span></div>
+    </div>
+    <div class="size-switcher" id="sizeSwitcher">
+      <button class="size-btn active" data-size="3">3×3</button>
+      <button class="size-btn" data-size="4">4×4</button>
+      <button class="size-btn" data-size="5">5×5</button>
+    </div>
+    <div class="board-wrap">
+      <div class="board" id="board"></div>
+      <svg class="lines-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" id="linesSvg"></svg>
+    </div>
+    <footer>
+      <button class="reset-btn" id="resetBtn">盤面をリセット</button>
+      <p class="save-note"><span id="saveStatus"></span></p>
+    </footer>
+  </section>
+
+  <section class="tab-panel" id="panel-daily">
+    <div class="panel-header">
+      <span class="panel-title">Daily</span>
+    </div>
+    <div class="todo-input-row">
+      <input type="text" id="daily-input" placeholder="今日やることを入力" maxlength="60">
+      <button class="add-btn" id="daily-add">追加</button>
+    </div>
+    <div class="todo-list" id="daily-list"></div>
+    <div class="todo-footer-row">
+      <span class="todo-count" id="daily-count"></span>
+      <button class="reset-btn" id="daily-clear">リストをクリア</button>
+    </div>
+  </section>
+
+  <section class="tab-panel" id="panel-weekly">
+    <div class="panel-header">
+      <span class="panel-title">Weekly</span>
+    </div>
+    <div class="todo-input-row">
+      <input type="text" id="weekly-input" placeholder="今週やることを入力" maxlength="60">
+      <button class="add-btn" id="weekly-add">追加</button>
+    </div>
+    <div class="todo-list" id="weekly-list"></div>
+    <div class="todo-footer-row">
+      <span class="todo-count" id="weekly-count"></span>
+      <button class="reset-btn" id="weekly-clear">リストをクリア</button>
+    </div>
+  </section>
+
+  <section class="tab-panel" id="panel-monthly">
+    <div class="panel-header">
+      <span class="panel-title">Monthly</span>
+    </div>
+    <div class="todo-input-row">
+      <input type="text" id="monthly-input" placeholder="今月やることを入力" maxlength="60">
+      <button class="add-btn" id="monthly-add">追加</button>
+    </div>
+    <div class="todo-list" id="monthly-list"></div>
+    <div class="todo-footer-row">
+      <span class="todo-count" id="monthly-count"></span>
+      <button class="reset-btn" id="monthly-clear">リストをクリア</button>
+    </div>
+  </section>
+
+  <section class="tab-panel" id="panel-yearly">
+    <div class="panel-header">
+      <span class="panel-title">Yearly</span>
+    </div>
+    <div class="todo-input-row">
+      <input type="text" id="yearly-input" placeholder="今年やることを入力" maxlength="60">
+      <button class="add-btn" id="yearly-add">追加</button>
+    </div>
+    <div class="todo-list" id="yearly-list"></div>
+    <div class="todo-footer-row">
+      <span class="todo-count" id="yearly-count"></span>
+      <button class="reset-btn" id="yearly-clear">リストをクリア</button>
+    </div>
+  </section>
+
+  <p class="install-note">スマホのChromeで開いて、右上のメニューから「ホーム画面に追加」を選ぶとアプリのように開けます</p>
 </div>
 
 <div class="toast" id="toast">ビンゴ!</div>
 
 <script>
-  const STORAGE_KEY = 'board-state';
-  const cellsData = Array.from({length:9}, () => ({text:'', done:false}));
+  // ---- ビンゴ ----
+  const BINGO_SIZE_KEY = 'bingo-size';
+  const BINGO_DATA_KEY = (n) => `board-state-${n}x${n}`;
+
+  let gridSize = 3;
+  let cellsData = [];
   let lastAchieved = 0;
 
   const board = document.getElementById('board');
@@ -426,42 +736,49 @@
   const linesSvg = document.getElementById('linesSvg');
   const saveStatus = document.getElementById('saveStatus');
 
-  const LINES = [
-    [0,1,2],[3,4,5],[6,7,8],
-    [0,3,6],[1,4,7],[2,5,8],
-    [0,4,8],[2,4,6]
-  ];
-
-  function lineCoords(combo){
-    const centers = [16.67, 50, 83.33];
-    const [a,,c] = combo;
-    const r0 = Math.floor(a/3), col0 = a%3;
-    const r2 = Math.floor(c/3), col2 = c%3;
-    return {
-      x1: centers[col0], y1: centers[r0],
-      x2: centers[col2], y2: centers[r2]
-    };
+  function buildLines(n){
+    const lines = [];
+    for(let r=0;r<n;r++){
+      const row=[];
+      for(let c=0;c<n;c++) row.push(r*n+c);
+      lines.push(row);
+    }
+    for(let c=0;c<n;c++){
+      const col=[];
+      for(let r=0;r<n;r++) col.push(r*n+c);
+      lines.push(col);
+    }
+    const d1=[],d2=[];
+    for(let i=0;i<n;i++){ d1.push(i*n+i); d2.push(i*n+(n-1-i)); }
+    lines.push(d1,d2);
+    return lines;
   }
 
-  LINES.forEach((combo, i) => {
-    const {x1,y1,x2,y2} = lineCoords(combo);
-    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
-    path.setAttribute('d', `M ${x1} ${y1} L ${x2} ${y2}`);
-    path.dataset.lineIndex = i;
-    linesSvg.appendChild(path);
-  });
-
-  function setupPathLength(path){
-    const len = path.getTotalLength();
-    path.style.strokeDasharray = len;
-    path.style.strokeDashoffset = len;
+  function buildSvgLines(n){
+    linesSvg.innerHTML='';
+    const lines=buildLines(n);
+    const step=100/n;
+    const centers=Array.from({length:n},(_,i)=>step*(i+0.5));
+    lines.forEach((combo,i)=>{
+      const a=combo[0],z=combo[combo.length-1];
+      const r0=Math.floor(a/n),c0=a%n;
+      const r2=Math.floor(z/n),c2=z%n;
+      const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+      path.setAttribute('d',`M ${centers[c0]} ${centers[r0]} L ${centers[c2]} ${centers[r2]}`);
+      path.dataset.lineIndex=i;
+      linesSvg.appendChild(path);
+    });
+    Array.from(linesSvg.querySelectorAll('path')).forEach(p=>{
+      const len=p.getTotalLength();
+      p.style.strokeDasharray=len;
+      p.style.strokeDashoffset=len;
+    });
   }
-  Array.from(linesSvg.querySelectorAll('path')).forEach(setupPathLength);
 
   function renderDate(){
-    const d = new Date();
-    const days = ['日','月','火','水','木','金','土'];
-    document.getElementById('dateLabel').textContent =
+    const d=new Date();
+    const days=['日','月','火','水','木','金','土'];
+    document.getElementById('dateLabel').textContent=
       `本日 ${d.getMonth()+1}/${d.getDate()}(${days[d.getDay()]})`;
   }
   renderDate();
@@ -469,87 +786,72 @@
   function showToast(){
     toast.classList.add('show');
     clearTimeout(showToast._t);
-    showToast._t = setTimeout(() => toast.classList.remove('show'), 1600);
+    showToast._t=setTimeout(()=>toast.classList.remove('show'),1600);
   }
 
   function spawnConfetti(){
-    const colors = ['#B5392C','#2C3C63','#B0892F','#EAE2CF','#8a8070'];
-    const container = document.createElement('div');
-    container.style.position = 'fixed';
-    container.style.inset = '0';
-    container.style.pointerEvents = 'none';
-    container.style.zIndex = '9999';
-    container.style.overflow = 'hidden';
+    const colors=['#B5392C','#2C3C63','#B0892F','#EAE2CF','#8a8070'];
+    const container=document.createElement('div');
+    container.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden';
     document.body.appendChild(container);
-
-    const count = 40;
-    for(let i=0;i<count;i++){
-      const piece = document.createElement('span');
-      piece.className = 'confetti-piece';
-      const angle = Math.random() * Math.PI * 2;
-      const distance = 90 + Math.random() * 170;
-      const tx = Math.cos(angle) * distance;
-      const ty = Math.sin(angle) * distance * 0.6 + 100 + Math.random() * 120;
-      const rot = (Math.random() * 720 - 360) + 'deg';
-      const size = 5 + Math.random() * 6;
-      piece.style.width = size + 'px';
-      piece.style.height = (size * 1.8) + 'px';
-      piece.style.background = colors[Math.floor(Math.random() * colors.length)];
-      piece.style.borderRadius = Math.random() > 0.5 ? '2px' : '50%';
-      piece.style.setProperty('--tx', tx + 'px');
-      piece.style.setProperty('--ty', ty + 'px');
-      piece.style.setProperty('--rot', rot);
-      const dur = (0.9 + Math.random() * 0.6).toFixed(2);
-      piece.style.animation = `confetti-burst ${dur}s cubic-bezier(.2,.7,.4,1) forwards`;
+    for(let i=0;i<40;i++){
+      const piece=document.createElement('span');
+      piece.className='confetti-piece';
+      const angle=Math.random()*Math.PI*2;
+      const distance=90+Math.random()*170;
+      const tx=Math.cos(angle)*distance;
+      const ty=Math.sin(angle)*distance*0.6+100+Math.random()*120;
+      const rot=(Math.random()*720-360)+'deg';
+      const size=5+Math.random()*6;
+      piece.style.width=size+'px';
+      piece.style.height=(size*1.8)+'px';
+      piece.style.background=colors[Math.floor(Math.random()*colors.length)];
+      piece.style.borderRadius=Math.random()>0.5?'2px':'50%';
+      piece.style.setProperty('--tx',tx+'px');
+      piece.style.setProperty('--ty',ty+'px');
+      piece.style.setProperty('--rot',rot);
+      const dur=(0.9+Math.random()*0.6).toFixed(2);
+      piece.style.animation=`confetti-burst ${dur}s cubic-bezier(.2,.7,.4,1) forwards`;
       container.appendChild(piece);
     }
-    setTimeout(() => container.remove(), 1700);
+    setTimeout(()=>container.remove(),1700);
   }
 
   function playCrackerSound(){
     try{
-      const Ctx = window.AudioContext || window.webkitAudioContext;
-      const ctx = new Ctx();
-      if(ctx.state === 'suspended') ctx.resume();
-      const now = ctx.currentTime;
-
-      // バン!というノイズの破裂音
-      const bufferSize = Math.floor(ctx.sampleRate * 0.25);
-      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const data = buffer.getChannelData(0);
-      for(let i=0;i<bufferSize;i++){
-        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 2);
-      }
-      const noise = ctx.createBufferSource();
-      noise.buffer = buffer;
-      const noiseFilter = ctx.createBiquadFilter();
-      noiseFilter.type = 'highpass';
-      noiseFilter.frequency.value = 700;
-      const noiseGain = ctx.createGain();
-      noiseGain.gain.setValueAtTime(0.55, now);
-      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+      const Ctx=window.AudioContext||window.webkitAudioContext;
+      const ctx=new Ctx();
+      if(ctx.state==='suspended') ctx.resume();
+      const now=ctx.currentTime;
+      const bufferSize=Math.floor(ctx.sampleRate*0.25);
+      const buffer=ctx.createBuffer(1,bufferSize,ctx.sampleRate);
+      const data=buffer.getChannelData(0);
+      for(let i=0;i<bufferSize;i++) data[i]=(Math.random()*2-1)*Math.pow(1-i/bufferSize,2);
+      const noise=ctx.createBufferSource();
+      noise.buffer=buffer;
+      const noiseFilter=ctx.createBiquadFilter();
+      noiseFilter.type='highpass';
+      noiseFilter.frequency.value=700;
+      const noiseGain=ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.55,now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.001,now+0.25);
       noise.connect(noiseFilter).connect(noiseGain).connect(ctx.destination);
       noise.start(now);
-
-      // 続く軽快な音(紙吹雪が舞う感じ)
-      [880, 1320, 1760].forEach((freq, idx) => {
-        const osc = ctx.createOscillator();
-        osc.type = 'sine';
-        osc.frequency.value = freq;
-        const g = ctx.createGain();
-        const t0 = now + 0.05 + idx * 0.07;
-        g.gain.setValueAtTime(0.0001, t0);
-        g.gain.exponentialRampToValueAtTime(0.16, t0 + 0.02);
-        g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.18);
+      [880,1320,1760].forEach((freq,idx)=>{
+        const osc=ctx.createOscillator();
+        osc.type='sine';
+        osc.frequency.value=freq;
+        const g=ctx.createGain();
+        const t0=now+0.05+idx*0.07;
+        g.gain.setValueAtTime(0.0001,t0);
+        g.gain.exponentialRampToValueAtTime(0.16,t0+0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001,t0+0.18);
         osc.connect(g).connect(ctx.destination);
         osc.start(t0);
-        osc.stop(t0 + 0.2);
+        osc.stop(t0+0.2);
       });
-
-      setTimeout(() => ctx.close(), 800);
-    }catch(err){
-      // 音声に対応していない環境では無視する
-    }
+      setTimeout(()=>ctx.close(),800);
+    }catch(err){}
   }
 
   function celebrate(){
@@ -560,29 +862,28 @@
 
   function flashSaveStatus(text){
     if(!saveStatus) return;
-    saveStatus.textContent = text;
+    saveStatus.textContent=text;
     clearTimeout(flashSaveStatus._t);
-    flashSaveStatus._t = setTimeout(() => { saveStatus.textContent = ''; }, 1400);
+    flashSaveStatus._t=setTimeout(()=>{saveStatus.textContent='';},1400);
   }
 
-  function loadState(){
+  function loadState(n){
+    cellsData=Array.from({length:n*n},()=>({text:'',done:false}));
     try{
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw=localStorage.getItem(BINGO_DATA_KEY(n));
       if(raw){
-        const parsed = JSON.parse(raw);
-        if(Array.isArray(parsed) && parsed.length === 9){
-          parsed.forEach((d, i) => { cellsData[i].text = d.text || ''; cellsData[i].done = !!d.done; });
+        const parsed=JSON.parse(raw);
+        if(Array.isArray(parsed)&&parsed.length===n*n){
+          parsed.forEach((d,i)=>{cellsData[i].text=d.text||'';cellsData[i].done=!!d.done;});
         }
       }
-    }catch(err){
-      // 初回起動時など、保存データがまだ無い場合はここに来る
-    }
-    rerenderAll({skipToast:true, skipSave:true});
+    }catch(err){}
+    rerenderAll({skipToast:true,skipSave:true});
   }
 
   function saveState(){
     try{
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(cellsData));
+      localStorage.setItem(BINGO_DATA_KEY(gridSize),JSON.stringify(cellsData));
       flashSaveStatus('保存しました');
     }catch(err){
       flashSaveStatus('保存できませんでした');
@@ -590,66 +891,79 @@
   }
 
   function checkLines(skipToast){
-    let achievedCount = 0;
-    LINES.forEach((combo, i) => {
-      const allDone = combo.every(idx => cellsData[idx].done);
-      const path = linesSvg.querySelector(`path[data-line-index="${i}"]`);
+    const lines=buildLines(gridSize);
+    let achievedCount=0;
+    lines.forEach((combo,i)=>{
+      const allDone=combo.every(idx=>cellsData[idx].done);
+      const path=linesSvg.querySelector(`path[data-line-index="${i}"]`);
+      if(!path) return;
       if(allDone){
         achievedCount++;
         if(!path.classList.contains('achieved')){
           path.classList.add('achieved');
-          path.style.strokeDashoffset = 0;
+          path.style.strokeDashoffset=0;
         }
       } else {
         if(path.classList.contains('achieved')){
           path.classList.remove('achieved');
-          const len = path.getTotalLength();
-          path.style.strokeDashoffset = len;
+          path.style.strokeDashoffset=path.getTotalLength();
         }
       }
     });
-    bingoCountEl.textContent = achievedCount;
-    if(!skipToast && achievedCount > lastAchieved) celebrate();
-    lastAchieved = achievedCount;
+    bingoCountEl.textContent=achievedCount;
+    if(!skipToast&&achievedCount>lastAchieved) celebrate();
+    lastAchieved=achievedCount;
   }
 
-  function renderCell(idx){
-    const data = cellsData[idx];
-    const el = document.createElement('div');
-    el.className = 'cell' + (data.done ? ' done' : '') + (!data.text && !data.done ? ' empty' : '');
-    el.dataset.idx = idx;
+  function fontSizeForGrid(n){ return n<=3?'13px':n===4?'11px':'9px'; }
+  function stampSizeForGrid(n){ return n<=3?46:n===4?34:26; }
 
-    if(!data.text && !data.done){
-      el.innerHTML = `<div class="empty-hint"><span class="plus">+</span>予定を入力</div>`;
-      el.addEventListener('click', () => startEdit(idx));
+  function renderCell(idx){
+    const n=gridSize;
+    const data=cellsData[idx];
+    const el=document.createElement('div');
+    el.className='cell'+(data.done?' done':'')+(!data.text&&!data.done?' empty':'');
+    el.dataset.idx=idx;
+    const fs=fontSizeForGrid(n);
+    const ss=stampSizeForGrid(n);
+
+    if(!data.text&&!data.done){
+      el.innerHTML=`<div class="empty-hint" style="font-size:${fs}"><span class="plus">+</span>入力</div>`;
+      el.addEventListener('click',()=>startEdit(idx));
     } else {
-      const textDiv = document.createElement('div');
-      textDiv.className = 'cell-text';
-      textDiv.textContent = data.text;
-      if(!data.done){
-        textDiv.addEventListener('click', () => startEdit(idx));
-      }
+      const textDiv=document.createElement('div');
+      textDiv.className='cell-text';
+      textDiv.style.fontSize=fs;
+      textDiv.textContent=data.text;
+      if(!data.done) textDiv.addEventListener('click',()=>startEdit(idx));
       el.appendChild(textDiv);
 
       if(data.done){
-        const stamp = document.createElement('div');
-        stamp.className = 'stamp-mark';
-        stamp.textContent = '済';
-        stamp.title = 'タップで取り消す';
-        stamp.addEventListener('click', (e) => {
+        const stamp=document.createElement('div');
+        stamp.className='stamp-mark';
+        stamp.style.width=ss+'px';
+        stamp.style.height=ss+'px';
+        stamp.style.marginTop=(-ss/2)+'px';
+        stamp.style.fontSize=(ss*0.4)+'px';
+        stamp.textContent='済';
+        stamp.title='タップで取り消す';
+        stamp.addEventListener('click',(e)=>{
           e.stopPropagation();
-          data.done = false;
+          data.done=false;
           rerenderAll();
         });
         el.appendChild(stamp);
       } else {
-        const btn = document.createElement('button');
-        btn.className = 'stamp-btn';
-        btn.textContent = '印';
-        btn.title = '完了として印を押す';
-        btn.addEventListener('click', (e) => {
+        const btn=document.createElement('button');
+        btn.className='stamp-btn';
+        btn.style.width=(ss*0.6)+'px';
+        btn.style.height=(ss*0.6)+'px';
+        btn.style.fontSize=(ss*0.24)+'px';
+        btn.textContent='印';
+        btn.title='完了として印を押す';
+        btn.addEventListener('click',(e)=>{
           e.stopPropagation();
-          data.done = true;
+          data.done=true;
           rerenderAll();
         });
         el.appendChild(btn);
@@ -659,44 +973,207 @@
   }
 
   function startEdit(idx){
-    const data = cellsData[idx];
-    const el = board.querySelector(`.cell[data-idx="${idx}"]`);
-    el.className = 'cell';
-    el.innerHTML = '';
-    const ta = document.createElement('textarea');
-    ta.value = data.text;
-    ta.placeholder = '例: 資料を提出する';
-    ta.maxLength = 40;
+    const data=cellsData[idx];
+    const el=board.querySelector(`.cell[data-idx="${idx}"]`);
+    el.className='cell';
+    el.innerHTML='';
+    const ta=document.createElement('textarea');
+    ta.value=data.text;
+    ta.placeholder='入力…';
+    ta.maxLength=40;
+    ta.style.fontSize=fontSizeForGrid(gridSize);
     el.appendChild(ta);
     ta.focus();
-    ta.addEventListener('blur', () => {
-      data.text = ta.value.trim();
+    ta.addEventListener('blur',()=>{
+      data.text=ta.value.trim();
       rerenderAll();
     });
-    ta.addEventListener('keydown', (e) => {
-      if(e.key === 'Enter' && !e.shiftKey){
-        e.preventDefault();
-        ta.blur();
-      }
+    ta.addEventListener('keydown',(e)=>{
+      if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); ta.blur(); }
     });
   }
 
   function rerenderAll(opts){
-    opts = opts || {};
-    board.innerHTML = '';
-    cellsData.forEach((_, idx) => board.appendChild(renderCell(idx)));
+    opts=opts||{};
+    board.style.gridTemplateColumns=`repeat(${gridSize}, 1fr)`;
+    board.innerHTML='';
+    cellsData.forEach((_,idx)=>board.appendChild(renderCell(idx)));
     checkLines(opts.skipToast);
     if(!opts.skipSave) saveState();
   }
 
-  document.getElementById('resetBtn').addEventListener('click', () => {
+  function switchGridSize(n){
+    gridSize=n;
+    lastAchieved=0;
+    document.querySelectorAll('.size-btn').forEach(btn=>{
+      btn.classList.toggle('active',parseInt(btn.dataset.size)===n);
+    });
+    try{ localStorage.setItem(BINGO_SIZE_KEY,n); }catch(err){}
+    buildSvgLines(n);
+    loadState(n);
+  }
+
+  document.querySelectorAll('.size-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const n=parseInt(btn.dataset.size);
+      if(n!==gridSize) switchGridSize(n);
+    });
+  });
+
+  document.getElementById('resetBtn').addEventListener('click',()=>{
     if(confirm('盤面をリセットしますか?入力した内容は消えます。')){
-      cellsData.forEach(d => { d.text = ''; d.done = false; });
+      cellsData.forEach(d=>{d.text='';d.done=false;});
       rerenderAll();
     }
   });
 
-  loadState();
+  (function initBingo(){
+    let n=3;
+    try{
+      const saved=parseInt(localStorage.getItem(BINGO_SIZE_KEY));
+      if([3,4,5].includes(saved)) n=saved;
+    }catch(err){}
+    switchGridSize(n);
+  })();
+
+
+  // ---- タブ切り替え ----
+  const TAB_KEY = 'active-tab';
+  const tabButtons = Array.from(document.querySelectorAll('.tab-btn'));
+  const tabPanels = Array.from(document.querySelectorAll('.tab-panel'));
+
+  function switchTab(name){
+    tabButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === name));
+    tabPanels.forEach(panel => panel.classList.toggle('active', panel.id === `panel-${name}`));
+    try{ localStorage.setItem(TAB_KEY, name); }catch(err){}
+  }
+
+  tabButtons.forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
+
+  (function restoreTab(){
+    try{
+      const saved = localStorage.getItem(TAB_KEY);
+      if(saved && tabButtons.some(btn => btn.dataset.tab === saved)){
+        switchTab(saved);
+      }
+    }catch(err){}
+  })();
+
+  // ---- Daily / Weekly / Monthly / Yearly の共通ToDoリスト ----
+  function createTodoList(key, listId, inputId, addBtnId, clearBtnId, countId){
+    let items = [];
+    const listEl = document.getElementById(listId);
+    const countEl = document.getElementById(countId);
+    const inputEl = document.getElementById(inputId);
+
+    function load(){
+      try{
+        const raw = localStorage.getItem(key);
+        if(raw){
+          const parsed = JSON.parse(raw);
+          if(Array.isArray(parsed)) items = parsed;
+        }
+      }catch(err){}
+      render();
+    }
+
+    function save(){
+      try{ localStorage.setItem(key, JSON.stringify(items)); }catch(err){}
+    }
+
+    function render(){
+      listEl.innerHTML = '';
+      if(items.length === 0){
+        const hint = document.createElement('div');
+        hint.className = 'todo-empty-hint';
+        hint.textContent = '入力欄から追加してください';
+        listEl.appendChild(hint);
+      }
+      items.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'todo-row' + (item.done ? ' done' : '');
+
+        const stampWrap = document.createElement('div');
+        stampWrap.className = 'todo-stamp-wrap';
+        if(item.done){
+          const stamp = document.createElement('div');
+          stamp.className = 'stamp-mark small';
+          stamp.textContent = '済';
+          stamp.title = 'タップで取り消す';
+          stamp.addEventListener('click', () => {
+            item.done = false;
+            save(); render();
+          });
+          stampWrap.appendChild(stamp);
+        } else {
+          const btn = document.createElement('button');
+          btn.className = 'stamp-btn small';
+          btn.textContent = '印';
+          btn.title = '完了として印を押す';
+          btn.addEventListener('click', () => {
+            item.done = true;
+            save(); render();
+            if(items.length > 0 && items.every(i => i.done)) celebrate();
+          });
+          stampWrap.appendChild(btn);
+        }
+        row.appendChild(stampWrap);
+
+        const text = document.createElement('div');
+        text.className = 'todo-text';
+        text.textContent = item.text;
+        row.appendChild(text);
+
+        const del = document.createElement('button');
+        del.className = 'todo-del';
+        del.textContent = '×';
+        del.title = '削除';
+        del.addEventListener('click', () => {
+          items = items.filter(i => i.id !== item.id);
+          save(); render();
+        });
+        row.appendChild(del);
+
+        listEl.appendChild(row);
+      });
+
+      const doneCount = items.filter(i => i.done).length;
+      countEl.textContent = items.length ? `${doneCount}/${items.length} 完了` : '';
+    }
+
+    function addItem(){
+      const text = inputEl.value.trim();
+      if(!text) return;
+      items.push({ id: Date.now() + '-' + Math.random().toString(36).slice(2), text, done:false });
+      save(); render();
+      inputEl.value = '';
+      inputEl.focus();
+    }
+
+    document.getElementById(addBtnId).addEventListener('click', addItem);
+    inputEl.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter'){
+        e.preventDefault();
+        addItem();
+      }
+    });
+
+    document.getElementById(clearBtnId).addEventListener('click', () => {
+      if(confirm('リストをクリアしますか?入力した内容は消えます。')){
+        items = [];
+        save(); render();
+      }
+    });
+
+    load();
+  }
+
+  createTodoList('daily-list-data', 'daily-list', 'daily-input', 'daily-add', 'daily-clear', 'daily-count');
+  createTodoList('weekly-list-data', 'weekly-list', 'weekly-input', 'weekly-add', 'weekly-clear', 'weekly-count');
+  createTodoList('monthly-list-data', 'monthly-list', 'monthly-input', 'monthly-add', 'monthly-clear', 'monthly-count');
+  createTodoList('yearly-list-data', 'yearly-list', 'yearly-input', 'yearly-add', 'yearly-clear', 'yearly-count');
 </script>
 
 </body>
