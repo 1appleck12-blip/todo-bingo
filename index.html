@@ -780,6 +780,91 @@
     gap:2px;
   }
 
+
+  /* ---- エンタメ ---- */
+  .entame-input-block{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    margin-bottom:10px;
+  }
+
+  .entame-cat-row{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+  }
+
+  .cat-btn{
+    font-size:12px;
+    padding:5px 11px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:transparent;
+    color:var(--ink-soft);
+    cursor:pointer;
+    transition:background 0.18s, border-color 0.18s, color 0.18s, transform 0.12s;
+    white-space:nowrap;
+  }
+
+  .cat-btn.active{
+    background:var(--indigo);
+    border-color:var(--indigo);
+    color:var(--paper);
+  }
+
+  .cat-btn:active{ transform:scale(0.92); }
+
+  .entame-filter-row{
+    display:flex;
+    gap:5px;
+    overflow-x:auto;
+    padding-bottom:2px;
+    margin-bottom:12px;
+    -ms-overflow-style:none;
+    scrollbar-width:none;
+  }
+
+  .entame-filter-row::-webkit-scrollbar{ display:none; }
+
+  .filter-btn{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    padding:4px 11px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:transparent;
+    color:var(--ink-soft);
+    cursor:pointer;
+    white-space:nowrap;
+    flex:none;
+    transition:background 0.18s, border-color 0.18s, color 0.18s, transform 0.12s;
+  }
+
+  .filter-btn.active{
+    background:var(--gold);
+    border-color:var(--gold);
+    color:var(--paper);
+  }
+
+  .filter-btn:active{ transform:scale(0.92); }
+
+  .entame-cat-tag{
+    display:inline-block;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px;
+    padding:2px 7px;
+    border-radius:999px;
+    margin-right:6px;
+    flex:none;
+  }
+
+  .cat-tag-映画 { background:rgba(44,60,99,0.12); color:var(--indigo); }
+  .cat-tag-ドラマ{ background:rgba(176,137,47,0.12); color:var(--gold); }
+  .cat-tag-本    { background:rgba(181,57,44,0.10); color:var(--vermillion); }
+  .cat-tag-アニメ{ background:rgba(90,140,100,0.12); color:#3a7a4a; }
+  .cat-tag-その他{ background:rgba(107,98,88,0.10); color:var(--ink-soft); }
+
   .toast{
     position:fixed;
     bottom:28px;
@@ -836,6 +921,7 @@
     <button class="tab-btn" data-tab="someday">いつか</button>
     <button class="tab-btn" data-tab="deadline">期限付き</button>
     <button class="tab-btn" data-tab="waiting">時がきたら</button>
+    <button class="tab-btn" data-tab="entame">エンタメ</button>
   </nav>
 
   <section class="tab-panel active" id="panel-bingo">
@@ -985,6 +1071,39 @@
     <div class="todo-footer-row">
       <span></span>
       <button class="reset-btn" id="waiting-clear">リストをクリア</button>
+    </div>
+  </section>
+
+  <section class="tab-panel" id="panel-entame">
+    <div class="panel-header">
+      <span class="panel-title">エンタメ</span>
+      <span class="todo-count" id="entame-count"></span>
+    </div>
+    <div class="entame-input-block">
+      <div class="entame-cat-row" id="entame-cats">
+        <button class="cat-btn active" data-cat="映画">🎬 映画</button>
+        <button class="cat-btn" data-cat="ドラマ">📺 ドラマ</button>
+        <button class="cat-btn" data-cat="本">📖 本</button>
+        <button class="cat-btn" data-cat="アニメ">✨ アニメ</button>
+        <button class="cat-btn" data-cat="その他">＋ その他</button>
+      </div>
+      <div class="todo-input-row">
+        <input type="text" id="entame-input" placeholder="タイトルを入力" maxlength="60">
+        <button class="add-btn" id="entame-add">追加</button>
+      </div>
+    </div>
+    <div class="entame-filter-row" id="entame-filters">
+      <button class="filter-btn active" data-filter="all">すべて</button>
+      <button class="filter-btn" data-filter="映画">映画</button>
+      <button class="filter-btn" data-filter="ドラマ">ドラマ</button>
+      <button class="filter-btn" data-filter="本">本</button>
+      <button class="filter-btn" data-filter="アニメ">アニメ</button>
+      <button class="filter-btn" data-filter="その他">その他</button>
+    </div>
+    <div class="todo-list" id="entame-list"></div>
+    <div class="todo-footer-row">
+      <span></span>
+      <button class="reset-btn" id="entame-clear">リストをクリア</button>
     </div>
   </section>
 
@@ -1741,6 +1860,154 @@
     (function(){
       let pending=false, timer=null;
       const btn = document.getElementById('deadline-clear');
+      btn.addEventListener('click', ()=>{
+        if(!pending){
+          pending=true;
+          btn.textContent='もう一度タップで確定';
+          btn.style.color='var(--vermillion)';
+          timer=setTimeout(()=>{ pending=false; btn.textContent='リストをクリア'; btn.style.color=''; },3000);
+        } else {
+          clearTimeout(timer); pending=false;
+          btn.textContent='リストをクリア'; btn.style.color='';
+          items=[]; save(); render();
+        }
+      });
+    })();
+
+    load();
+  })();
+
+  // ---- エンタメ ----
+  (function(){
+    const STORAGE_KEY = 'entame-list-data';
+    let items = [];
+    let selectedCat = '映画';
+    let selectedFilter = 'all';
+
+    const listEl   = document.getElementById('entame-list');
+    const inputEl  = document.getElementById('entame-input');
+    const countEl  = document.getElementById('entame-count');
+
+    function load(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(raw){
+          const parsed = JSON.parse(raw);
+          if(Array.isArray(parsed)) items = parsed;
+        }
+      }catch(err){}
+      render();
+    }
+
+    function save(){
+      try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); }catch(err){}
+    }
+
+    function render(){
+      listEl.innerHTML = '';
+      const visible = selectedFilter === 'all'
+        ? items
+        : items.filter(i => i.cat === selectedFilter);
+
+      if(visible.length === 0){
+        const hint = document.createElement('div');
+        hint.className = 'todo-empty-hint';
+        hint.textContent = visible.length === 0 && items.length === 0
+          ? 'カテゴリを選んでタイトルを追加してください'
+          : 'このカテゴリにはまだ何もありません';
+        listEl.appendChild(hint);
+      }
+
+      visible.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'todo-row' + (item.done ? ' done' : '');
+
+        const stampWrap = document.createElement('div');
+        stampWrap.className = 'todo-stamp-wrap';
+        if(item.done){
+          const stamp = document.createElement('div');
+          stamp.className = 'stamp-mark small';
+          stamp.textContent = '済';
+          stamp.addEventListener('click', () => { item.done=false; save(); render(); });
+          stampWrap.appendChild(stamp);
+        } else {
+          const btn = document.createElement('button');
+          btn.className = 'stamp-btn small';
+          btn.textContent = '印';
+          btn.addEventListener('click', () => { item.done=true; save(); render(); });
+          stampWrap.appendChild(btn);
+        }
+        row.appendChild(stampWrap);
+
+        const tag = document.createElement('span');
+        tag.className = `entame-cat-tag cat-tag-${item.cat}`;
+        tag.textContent = item.cat;
+        row.appendChild(tag);
+
+        const text = document.createElement('div');
+        text.className = 'todo-text';
+        text.textContent = item.text;
+        row.appendChild(text);
+
+        const del = document.createElement('button');
+        del.className = 'todo-del';
+        del.textContent = '×';
+        del.addEventListener('click', () => {
+          items = items.filter(i => i.id !== item.id);
+          save(); render();
+        });
+        row.appendChild(del);
+
+        listEl.appendChild(row);
+      });
+
+      const total = items.length;
+      const done  = items.filter(i=>i.done).length;
+      countEl.textContent = total ? `${done}/${total} 完了` : '';
+    }
+
+    // カテゴリボタン
+    document.querySelectorAll('.cat-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        selectedCat = btn.dataset.cat;
+        document.querySelectorAll('.cat-btn').forEach(b =>
+          b.classList.toggle('active', b.dataset.cat === selectedCat));
+        inputEl.focus();
+      });
+    });
+
+    // フィルターボタン
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        selectedFilter = btn.dataset.filter;
+        document.querySelectorAll('.filter-btn').forEach(b =>
+          b.classList.toggle('active', b.dataset.filter === selectedFilter));
+        render();
+      });
+    });
+
+    function addItem(){
+      const text = inputEl.value.trim();
+      if(!text) return;
+      items.push({
+        id: Date.now()+'-'+Math.random().toString(36).slice(2),
+        text,
+        cat: selectedCat,
+        done: false
+      });
+      save(); render();
+      inputEl.value = '';
+      inputEl.focus();
+    }
+
+    document.getElementById('entame-add').addEventListener('click', addItem);
+    inputEl.addEventListener('keydown', e => {
+      if(e.key==='Enter'){ e.preventDefault(); addItem(); }
+    });
+
+    (function(){
+      let pending=false, timer=null;
+      const btn = document.getElementById('entame-clear');
       btn.addEventListener('click', ()=>{
         if(!pending){
           pending=true;
