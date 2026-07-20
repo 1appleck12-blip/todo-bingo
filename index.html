@@ -898,6 +898,34 @@
     0%{ transform:translate(0,0) rotate(0deg); opacity:1; }
     100%{ transform:translate(var(--tx), var(--ty)) rotate(var(--rot)); opacity:0; }
   }
+
+  .backup-block{
+    margin-top:6px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+    width:100%;
+  }
+
+  .backup-buttons{
+    display:flex;
+    gap:8px;
+  }
+
+  #backupArea{
+    display:none;
+    width:100%;
+    height:120px;
+    margin-top:4px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    padding:8px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    background:#fffdf8;
+    color:var(--ink);
+  }
 </style>
 </head>
 <body>
@@ -1108,6 +1136,15 @@
   </section>
 
   <p class="install-note">スマホのChromeで開いて、右上のメニューから「ホーム画面に追加」を選ぶとアプリのように開けます</p>
+
+  <div class="backup-block">
+    <div class="backup-buttons">
+      <button class="reset-btn" id="exportBtn">データを書き出す</button>
+      <button class="reset-btn" id="importBtn">データを読み込む</button>
+    </div>
+    <textarea id="backupArea" placeholder="ここに貼り付けて「データを読み込む」をもう一度押してください"></textarea>
+    <p class="save-note" id="backupStatus"></p>
+  </div>
 </div>
 
 <div class="toast" id="toast">ビンゴ!</div>
@@ -2023,6 +2060,68 @@
     })();
 
     load();
+  })();
+
+  // ---- データの書き出し / 読み込み(Chrome→Safariなど、ブラウザ間の移行用) ----
+  (function(){
+    const ALL_KEYS = [
+      'bingo-size',
+      'board-state-3x3','board-state-4x4','board-state-5x5',
+      'active-tab',
+      'daily-list-data','weekly-list-data','monthly-list-data','yearly-list-data',
+      'numbered-list-data',
+      'someday-list-data',
+      'waiting-list-data',
+      'deadline-list-data',
+      'entame-list-data'
+    ];
+
+    const exportBtn = document.getElementById('exportBtn');
+    const importBtn = document.getElementById('importBtn');
+    const area = document.getElementById('backupArea');
+    const status = document.getElementById('backupStatus');
+
+    exportBtn.addEventListener('click', () => {
+      const data = {};
+      ALL_KEYS.forEach(k => {
+        const v = localStorage.getItem(k);
+        if(v !== null) data[k] = v;
+      });
+      const json = JSON.stringify(data);
+      area.value = json;
+      area.style.display = 'block';
+      area.focus();
+      area.select();
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(json).then(() => {
+          status.textContent = 'コピーしました。移したい方のブラウザで貼り付けてください';
+        }).catch(() => {
+          status.textContent = '選択済みです。このまま手動でコピーしてください';
+        });
+      } else {
+        status.textContent = '選択済みです。このまま手動でコピーしてください';
+      }
+    });
+
+    importBtn.addEventListener('click', () => {
+      if(area.style.display !== 'block' || !area.value.trim()){
+        area.style.display = 'block';
+        area.value = '';
+        area.focus();
+        status.textContent = '貼り付けたら、もう一度「データを読み込む」を押してください';
+        return;
+      }
+      try{
+        const data = JSON.parse(area.value.trim());
+        Object.keys(data).forEach(k => {
+          if(ALL_KEYS.includes(k)) localStorage.setItem(k, data[k]);
+        });
+        status.textContent = '読み込みました。画面を更新します…';
+        setTimeout(() => location.reload(), 800);
+      }catch(err){
+        status.textContent = '読み込みに失敗しました。データが正しく貼り付けられているか確認してください';
+      }
+    });
   })();
 
 </script>
