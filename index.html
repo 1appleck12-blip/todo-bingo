@@ -582,6 +582,204 @@
     line-height:1.6;
   }
 
+
+  .numbered-list{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    margin-bottom:12px;
+    min-height:8px;
+  }
+
+  .numbered-row{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    padding:8px 10px;
+    background:#fffdf8;
+    border:1px solid var(--line);
+    border-radius:8px;
+    transition:border-color 0.2s ease, opacity 0.2s ease;
+  }
+
+  .numbered-row.done{
+    border-color:#e2d9be;
+    opacity:0.7;
+  }
+
+  .numbered-num{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    color:var(--gold);
+    min-width:20px;
+    padding-top:2px;
+    flex:none;
+    font-weight:700;
+  }
+
+  .numbered-row.done .numbered-num{
+    color:var(--ink-soft);
+  }
+
+  .numbered-text{
+    flex:1;
+    font-size:13px;
+    line-height:1.55;
+    word-break:break-word;
+    padding-top:1px;
+  }
+
+  .numbered-row.done .numbered-text{
+    color:var(--ink-soft);
+    text-decoration:line-through;
+    text-decoration-color:var(--vermillion-soft);
+  }
+
+  .numbered-done-btn{
+    flex:none;
+    width:24px;
+    height:24px;
+    border-radius:50%;
+    border:1.4px solid var(--indigo-soft);
+    background:transparent;
+    color:var(--indigo-soft);
+    font-size:10px;
+    font-family:'JetBrains Mono', monospace;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:transform 0.15s ease, border-color 0.15s ease;
+  }
+
+  .numbered-done-btn:active{ transform:scale(0.85); }
+
+  .numbered-row.done .numbered-done-btn{
+    border-color:var(--vermillion);
+    color:var(--vermillion);
+    font-size:13px;
+  }
+
+  .numbered-del{
+    flex:none;
+    width:22px;
+    height:22px;
+    border-radius:50%;
+    border:none;
+    background:none;
+    color:var(--ink-soft);
+    font-size:15px;
+    line-height:1;
+    cursor:pointer;
+    transition:color 0.15s ease, transform 0.15s ease;
+    padding-top:1px;
+  }
+
+  .numbered-del:hover{ color:var(--vermillion); }
+  .numbered-del:active{ transform:scale(0.85); }
+
+  .numbered-add-row{
+    display:flex;
+    gap:8px;
+    margin-bottom:10px;
+  }
+
+  .numbered-add-row input{
+    flex:1;
+    min-width:0;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:10px 12px;
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    font-size:14px;
+    background:#fffdf8;
+    outline:none;
+    color:var(--ink);
+  }
+
+  .numbered-add-row input:focus{ border-color:var(--indigo-soft); }
+
+  .numbered-empty-hint{
+    font-size:12px;
+    color:var(--ink-soft);
+    text-align:center;
+    padding:20px 0;
+    opacity:0.65;
+  }
+
+
+  .deadline-input-block{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    margin-bottom:14px;
+  }
+
+  .deadline-input-block .todo-input-row{
+    margin-bottom:0;
+  }
+
+  .deadline-date-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+
+  .deadline-label{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    color:var(--ink-soft);
+    flex:none;
+  }
+
+  input[type="date"]{
+    flex:1;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:9px 10px;
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    font-size:14px;
+    background:#fffdf8;
+    outline:none;
+    color:var(--ink);
+    -webkit-appearance:none;
+  }
+
+  input[type="date"]:focus{
+    border-color:var(--indigo-soft);
+  }
+
+  .deadline-chip{
+    display:inline-block;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px;
+    padding:2px 7px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    color:var(--ink-soft);
+    white-space:nowrap;
+    margin-top:3px;
+  }
+
+  .deadline-chip.overdue{
+    border-color:var(--vermillion-soft);
+    color:var(--vermillion);
+    background:rgba(181,57,44,0.06);
+  }
+
+  .deadline-chip.soon{
+    border-color:var(--gold);
+    color:var(--gold);
+    background:rgba(176,137,47,0.06);
+  }
+
+  .todo-text-wrap{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+  }
+
   .toast{
     position:fixed;
     bottom:28px;
@@ -634,6 +832,10 @@
     <button class="tab-btn" data-tab="weekly">Weekly</button>
     <button class="tab-btn" data-tab="monthly">Monthly</button>
     <button class="tab-btn" data-tab="yearly">Yearly</button>
+    <button class="tab-btn" data-tab="numbered">リスト</button>
+    <button class="tab-btn" data-tab="someday">いつか</button>
+    <button class="tab-btn" data-tab="deadline">期限付き</button>
+    <button class="tab-btn" data-tab="waiting">時がきたら</button>
   </nav>
 
   <section class="tab-panel active" id="panel-bingo">
@@ -713,6 +915,76 @@
     <div class="todo-footer-row">
       <span class="todo-count" id="yearly-count"></span>
       <button class="reset-btn" id="yearly-clear">リストをクリア</button>
+    </div>
+  </section>
+
+  <section class="tab-panel" id="panel-numbered">
+    <div class="panel-header">
+      <span class="panel-title">リスト</span>
+      <span class="todo-count" id="numbered-count"></span>
+    </div>
+    <div class="numbered-list" id="numbered-list"></div>
+    <div class="numbered-add-row">
+      <input type="text" id="numbered-input" placeholder="やることを入力してEnter" maxlength="60">
+      <button class="add-btn" id="numbered-add">追加</button>
+    </div>
+    <div class="todo-footer-row">
+      <span></span>
+      <button class="reset-btn" id="numbered-clear">リストをクリア</button>
+    </div>
+  </section>
+
+  <section class="tab-panel" id="panel-someday">
+    <div class="panel-header">
+      <span class="panel-title">いつかやること</span>
+      <span class="todo-count" id="someday-count"></span>
+    </div>
+    <div class="todo-input-row">
+      <input type="text" id="someday-input" placeholder="いつかやりたいことを入力" maxlength="60">
+      <button class="add-btn" id="someday-add">追加</button>
+    </div>
+    <div class="todo-list" id="someday-list"></div>
+    <div class="todo-footer-row">
+      <span></span>
+      <button class="reset-btn" id="someday-clear">リストをクリア</button>
+    </div>
+  </section>
+
+  <section class="tab-panel" id="panel-deadline">
+    <div class="panel-header">
+      <span class="panel-title">期限付きのこと</span>
+      <span class="todo-count" id="deadline-count"></span>
+    </div>
+    <div class="deadline-input-block">
+      <div class="todo-input-row">
+        <input type="text" id="deadline-input" placeholder="やることを入力" maxlength="60">
+      </div>
+      <div class="deadline-date-row">
+        <label class="deadline-label">期限</label>
+        <input type="date" id="deadline-date">
+        <button class="add-btn" id="deadline-add">追加</button>
+      </div>
+    </div>
+    <div class="todo-list" id="deadline-list"></div>
+    <div class="todo-footer-row">
+      <span></span>
+      <button class="reset-btn" id="deadline-clear">リストをクリア</button>
+    </div>
+  </section>
+
+  <section class="tab-panel" id="panel-waiting">
+    <div class="panel-header">
+      <span class="panel-title">時がきたらやること</span>
+      <span class="todo-count" id="waiting-count"></span>
+    </div>
+    <div class="todo-input-row">
+      <input type="text" id="waiting-input" placeholder="タイミングを待っていることを入力" maxlength="60">
+      <button class="add-btn" id="waiting-add">追加</button>
+    </div>
+    <div class="todo-list" id="waiting-list"></div>
+    <div class="todo-footer-row">
+      <span></span>
+      <button class="reset-btn" id="waiting-clear">リストをクリア</button>
     </div>
   </section>
 
@@ -1020,12 +1292,33 @@
     });
   });
 
-  document.getElementById('resetBtn').addEventListener('click',()=>{
-    if(confirm('盤面をリセットしますか?入力した内容は消えます。')){
-      cellsData.forEach(d=>{d.text='';d.done=false;});
-      rerenderAll();
-    }
-  });
+  (function(){
+    let resetPending = false;
+    let resetTimer = null;
+    const resetBtn = document.getElementById('resetBtn');
+    resetBtn.addEventListener('click', () => {
+      if(!resetPending){
+        resetPending = true;
+        resetBtn.textContent = '本当にリセット？（もう一度タップ）';
+        resetBtn.style.borderColor = 'var(--vermillion)';
+        resetBtn.style.color = 'var(--vermillion)';
+        resetTimer = setTimeout(() => {
+          resetPending = false;
+          resetBtn.textContent = '盤面をリセット';
+          resetBtn.style.borderColor = '';
+          resetBtn.style.color = '';
+        }, 3000);
+      } else {
+        clearTimeout(resetTimer);
+        resetPending = false;
+        resetBtn.textContent = '盤面をリセット';
+        resetBtn.style.borderColor = '';
+        resetBtn.style.color = '';
+        cellsData.forEach(d=>{d.text='';d.done=false;});
+        rerenderAll();
+      }
+    });
+  })();
 
   (function initBingo(){
     let n=3;
@@ -1160,12 +1453,29 @@
       }
     });
 
-    document.getElementById(clearBtnId).addEventListener('click', () => {
-      if(confirm('リストをクリアしますか?入力した内容は消えます。')){
-        items = [];
-        save(); render();
-      }
-    });
+    (function(){
+      let pending = false, timer = null;
+      const btn = document.getElementById(clearBtnId);
+      btn.addEventListener('click', () => {
+        if(!pending){
+          pending = true;
+          btn.textContent = 'もう一度タップで確定';
+          btn.style.color = 'var(--vermillion)';
+          timer = setTimeout(() => {
+            pending = false;
+            btn.textContent = 'リストをクリア';
+            btn.style.color = '';
+          }, 3000);
+        } else {
+          clearTimeout(timer);
+          pending = false;
+          btn.textContent = 'リストをクリア';
+          btn.style.color = '';
+          items = [];
+          save(); render();
+        }
+      });
+    })();
 
     load();
   }
@@ -1174,6 +1484,280 @@
   createTodoList('weekly-list-data', 'weekly-list', 'weekly-input', 'weekly-add', 'weekly-clear', 'weekly-count');
   createTodoList('monthly-list-data', 'monthly-list', 'monthly-input', 'monthly-add', 'monthly-clear', 'monthly-count');
   createTodoList('yearly-list-data', 'yearly-list', 'yearly-input', 'yearly-add', 'yearly-clear', 'yearly-count');
+  // ---- 番号付きリスト ----
+  (function(){
+    const STORAGE_KEY = 'numbered-list-data';
+    let items = [];
+
+    const listEl = document.getElementById('numbered-list');
+    const inputEl = document.getElementById('numbered-input');
+    const countEl = document.getElementById('numbered-count');
+
+    function load(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(raw){
+          const parsed = JSON.parse(raw);
+          if(Array.isArray(parsed)) items = parsed;
+        }
+      }catch(err){}
+      render();
+    }
+
+    function save(){
+      try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); }catch(err){}
+    }
+
+    function render(){
+      listEl.innerHTML = '';
+      if(items.length === 0){
+        const hint = document.createElement('div');
+        hint.className = 'numbered-empty-hint';
+        hint.textContent = '下の入力欄からやることを追加してください';
+        listEl.appendChild(hint);
+        countEl.textContent = '';
+        return;
+      }
+
+      // 番号は配列の順番で自動的に1, 2, 3...
+      items.forEach((item, pos) => {
+        const row = document.createElement('div');
+        row.className = 'numbered-row' + (item.done ? ' done' : '');
+
+        const num = document.createElement('span');
+        num.className = 'numbered-num';
+        num.textContent = (pos + 1) + '.';
+        row.appendChild(num);
+
+        const text = document.createElement('div');
+        text.className = 'numbered-text';
+        text.textContent = item.text;
+        row.appendChild(text);
+
+        const doneBtn = document.createElement('button');
+        doneBtn.className = 'numbered-done-btn';
+        doneBtn.title = item.done ? 'タップで未完了に戻す' : '完了にする';
+        doneBtn.textContent = item.done ? '済' : '印';
+        doneBtn.addEventListener('click', () => {
+          item.done = !item.done;
+          save(); render();
+        });
+        row.appendChild(doneBtn);
+
+        const del = document.createElement('button');
+        del.className = 'numbered-del';
+        del.textContent = '×';
+        del.title = '削除して繰り上げる';
+        del.addEventListener('click', () => {
+          items.splice(pos, 1);   // 削除すると後ろが自動で繰り上がる
+          save(); render();
+        });
+        row.appendChild(del);
+
+        listEl.appendChild(row);
+      });
+
+      const doneCount = items.filter(i => i.done).length;
+      countEl.textContent = `${doneCount}/${items.length} 完了`;
+    }
+
+    function addItem(){
+      const text = inputEl.value.trim();
+      if(!text) return;
+      items.push({ id: Date.now() + '-' + Math.random().toString(36).slice(2), text, done: false });
+      save(); render();
+      inputEl.value = '';
+      inputEl.focus();
+    }
+
+    document.getElementById('numbered-add').addEventListener('click', addItem);
+    inputEl.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter'){ e.preventDefault(); addItem(); }
+    });
+
+    (function(){
+      let pending = false, timer = null;
+      const btn = document.getElementById('numbered-clear');
+      btn.addEventListener('click', () => {
+        if(!pending){
+          pending = true;
+          btn.textContent = 'もう一度タップで確定';
+          btn.style.color = 'var(--vermillion)';
+          timer = setTimeout(() => {
+            pending = false;
+            btn.textContent = 'リストをクリア';
+            btn.style.color = '';
+          }, 3000);
+        } else {
+          clearTimeout(timer);
+          pending = false;
+          btn.textContent = 'リストをクリア';
+          btn.style.color = '';
+          items = [];
+          save(); render();
+        }
+      });
+    })();
+
+    load();
+  })();
+
+
+  // ---- いつかやること ----
+  createTodoList('someday-list-data','someday-list','someday-input','someday-add','someday-clear','someday-count');
+
+  // ---- 時がきたらやること ----
+  createTodoList('waiting-list-data','waiting-list','waiting-input','waiting-add','waiting-clear','waiting-count');
+
+  // ---- 期限付きのこと ----
+  (function(){
+    const STORAGE_KEY = 'deadline-list-data';
+    let items = [];
+    const listEl  = document.getElementById('deadline-list');
+    const inputEl = document.getElementById('deadline-input');
+    const dateEl  = document.getElementById('deadline-date');
+    const countEl = document.getElementById('deadline-count');
+
+    function load(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(raw){
+          const parsed = JSON.parse(raw);
+          if(Array.isArray(parsed)) items = parsed;
+        }
+      }catch(err){}
+      render();
+    }
+
+    function save(){
+      try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); }catch(err){}
+    }
+
+    function dateLabel(dateStr){
+      if(!dateStr) return '';
+      const today = new Date(); today.setHours(0,0,0,0);
+      const d = new Date(dateStr + 'T00:00:00');
+      const diff = Math.round((d - today) / 86400000);
+      if(diff < 0)  return { text: `${Math.abs(diff)}日超過`, cls: 'overdue' };
+      if(diff === 0) return { text: '今日が期限', cls: 'soon' };
+      if(diff <= 3)  return { text: `あと${diff}日`, cls: 'soon' };
+      const m = d.getMonth()+1, day = d.getDate();
+      return { text: `${m}/${day}まで`, cls: '' };
+    }
+
+    function render(){
+      listEl.innerHTML = '';
+      // 期限あり→日付昇順、期限なし→末尾
+      const sorted = [...items].sort((a,b)=>{
+        if(!a.date && !b.date) return 0;
+        if(!a.date) return 1;
+        if(!b.date) return -1;
+        return a.date.localeCompare(b.date);
+      });
+
+      if(sorted.length === 0){
+        const hint = document.createElement('div');
+        hint.className = 'todo-empty-hint';
+        hint.textContent = '入力欄から追加してください';
+        listEl.appendChild(hint);
+        countEl.textContent = '';
+        return;
+      }
+
+      sorted.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'todo-row' + (item.done ? ' done' : '');
+
+        const stampWrap = document.createElement('div');
+        stampWrap.className = 'todo-stamp-wrap';
+        if(item.done){
+          const stamp = document.createElement('div');
+          stamp.className = 'stamp-mark small';
+          stamp.textContent = '済';
+          stamp.addEventListener('click', () => { item.done=false; save(); render(); });
+          stampWrap.appendChild(stamp);
+        } else {
+          const btn = document.createElement('button');
+          btn.className = 'stamp-btn small';
+          btn.textContent = '印';
+          btn.addEventListener('click', () => { item.done=true; save(); render(); });
+          stampWrap.appendChild(btn);
+        }
+        row.appendChild(stampWrap);
+
+        const textWrap = document.createElement('div');
+        textWrap.className = 'todo-text-wrap';
+
+        const text = document.createElement('div');
+        text.className = 'todo-text';
+        text.textContent = item.text;
+        textWrap.appendChild(text);
+
+        if(item.date && !item.done){
+          const info = dateLabel(item.date);
+          const chip = document.createElement('span');
+          chip.className = 'deadline-chip' + (info.cls ? ' '+info.cls : '');
+          chip.textContent = info.text;
+          textWrap.appendChild(chip);
+        }
+        row.appendChild(textWrap);
+
+        const del = document.createElement('button');
+        del.className = 'todo-del';
+        del.textContent = '×';
+        del.addEventListener('click', () => {
+          items = items.filter(i => i.id !== item.id);
+          save(); render();
+        });
+        row.appendChild(del);
+
+        listEl.appendChild(row);
+      });
+
+      const doneCount = items.filter(i=>i.done).length;
+      countEl.textContent = items.length ? `${doneCount}/${items.length} 完了` : '';
+    }
+
+    function addItem(){
+      const text = inputEl.value.trim();
+      if(!text) return;
+      items.push({
+        id: Date.now()+'-'+Math.random().toString(36).slice(2),
+        text,
+        date: dateEl.value || '',
+        done: false
+      });
+      save(); render();
+      inputEl.value = '';
+      dateEl.value = '';
+      inputEl.focus();
+    }
+
+    document.getElementById('deadline-add').addEventListener('click', addItem);
+    inputEl.addEventListener('keydown', e => {
+      if(e.key==='Enter'){ e.preventDefault(); addItem(); }
+    });
+
+    (function(){
+      let pending=false, timer=null;
+      const btn = document.getElementById('deadline-clear');
+      btn.addEventListener('click', ()=>{
+        if(!pending){
+          pending=true;
+          btn.textContent='もう一度タップで確定';
+          btn.style.color='var(--vermillion)';
+          timer=setTimeout(()=>{ pending=false; btn.textContent='リストをクリア'; btn.style.color=''; },3000);
+        } else {
+          clearTimeout(timer); pending=false;
+          btn.textContent='リストをクリア'; btn.style.color='';
+          items=[]; save(); render();
+        }
+      });
+    })();
+
+    load();
+  })();
+
 </script>
 
 </body>
