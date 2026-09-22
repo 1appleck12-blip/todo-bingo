@@ -24,45 +24,26 @@
 *{box-sizing:border-box;}
 html,body{overscroll-behavior:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
 body{margin:0;min-height:100vh;background:radial-gradient(circle at 15% 10%,rgba(176,137,47,.06),transparent 40%),radial-gradient(circle at 85% 90%,rgba(44,60,99,.06),transparent 40%),var(--paper);font-family:'Zen Kaku Gothic New',sans-serif;color:var(--ink);}
-
-/* Loading */
 #loading-screen{position:fixed;inset:0;background:var(--paper);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;}
 .loading-logo{font-family:'Shippori Mincho',serif;font-size:28px;font-weight:700;color:var(--indigo);margin-bottom:20px;}
 .loading-spinner{width:32px;height:32px;border:2.5px solid var(--line);border-top-color:var(--indigo);border-radius:50%;animation:spin .8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
-
-/* Login */
 #login-screen{display:none;min-height:100vh;align-items:center;justify-content:center;flex-direction:column;padding:32px 20px;}
 .login-card{background:#fffdf8;border:1px solid var(--line);border-radius:16px;padding:36px 28px;max-width:360px;width:100%;text-align:center;}
-.login-card h1{font-family:'Shippori Mincho',serif;font-size:26px;margin:0 0 8px;color:var(--ink);}
-.login-card p{font-size:13px;color:var(--ink-soft);margin:0 0 28px;line-height:1.7;}
-.google-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px 20px;border:1px solid var(--line);border-radius:999px;background:#fffdf8;font-family:'Zen Kaku Gothic New',sans-serif;font-size:14px;color:var(--ink);cursor:pointer;transition:background .2s,border-color .2s,transform .15s;}
-.google-btn:hover{background:var(--paper-dark);border-color:var(--indigo-soft);}
-.google-btn:active{transform:scale(.96);}
-.google-icon{width:20px;height:20px;flex:none;}
-.login-note{font-size:11px;color:var(--ink-soft);margin-top:12px;line-height:1.6;}
-
-/* Main app */
+.login-card h1{font-family:'Shippori Mincho',serif;font-size:26px;margin:0 0 16px;color:var(--ink);}
+.login-note{font-size:11px;color:var(--ink-soft);margin-top:16px;line-height:1.6;}
 #app{display:none;max-width:480px;margin:0 auto;padding:20px 16px 60px;}
-
-/* User bar */
 .user-bar{display:flex;align-items:center;gap:8px;margin-bottom:18px;}
 .user-avatar{width:28px;height:28px;border-radius:50%;border:1px solid var(--line);object-fit:cover;flex:none;}
 .user-display-name{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-soft);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .logout-btn{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-soft);background:none;border:1px solid var(--line);border-radius:999px;padding:5px 12px;cursor:pointer;flex:none;transition:border-color .2s,color .2s,transform .15s;}
 .logout-btn:active{transform:scale(.94);}
-
-/* Header */
 header{margin-bottom:18px;}
 .eyebrow{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.06em;color:var(--ink-soft);}
 h1{font-family:'Shippori Mincho',serif;font-weight:700;font-size:28px;margin:2px 0 6px;letter-spacing:.02em;}
 .subtitle{font-size:13px;line-height:1.7;color:var(--ink-soft);margin:0;}
-
-/* Save status */
 .save-bar{min-height:14px;text-align:center;margin-bottom:4px;}
 .save-status{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-soft);}
-
-/* Tabs */
 .tabbar{display:flex;gap:6px;margin-bottom:20px;overflow-x:auto;padding-bottom:2px;-ms-overflow-style:none;scrollbar-width:none;}
 .tabbar::-webkit-scrollbar{display:none;}
 .tab-btn{font-family:'JetBrains Mono',monospace;font-size:12px;white-space:nowrap;flex:none;padding:8px 16px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink-soft);cursor:pointer;transition:background .2s,border-color .2s,color .2s,transform .15s;}
@@ -70,16 +51,10 @@ h1{font-family:'Shippori Mincho',serif;font-weight:700;font-size:28px;margin:2px
 .tab-btn:active{transform:scale(.94);}
 .tab-panel{display:none;}
 .tab-panel.active{display:block;}
-
-/* Panel header */
 .panel-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
 .panel-title{font-family:'Shippori Mincho',serif;font-weight:700;font-size:18px;}
-
-/* Bingo badge */
 .bingo-badge{display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--vermillion);border:1px solid var(--vermillion-soft);border-radius:999px;padding:4px 10px 4px 8px;background:rgba(181,57,44,.06);}
 .bingo-badge .count{font-size:15px;font-weight:700;}
-
-/* Bingo boards */
 .bingo-board-card{background:#fffdf8;border:1px solid var(--line);border-radius:12px;padding:14px 12px 12px;margin-bottom:18px;position:relative;}
 .board-card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
 .board-card-title{font-family:'Shippori Mincho',serif;font-weight:700;font-size:16px;color:var(--ink);outline:none;border-bottom:1px dashed transparent;padding:2px 4px;min-width:60px;max-width:200px;border-radius:4px;cursor:text;}
@@ -116,8 +91,6 @@ h1{font-family:'Shippori Mincho',serif;font-weight:700;font-size:28px;margin:2px
 .add-board-btn:active{transform:scale(.98);}
 .bingo-board-card .toast{position:absolute;bottom:auto;top:8px;left:50%;transform:translateX(-50%) translateY(-4px);font-size:12px;padding:6px 16px;pointer-events:none;opacity:0;transition:opacity .3s,transform .3s;z-index:10;}
 .bingo-board-card .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-
-/* Todo lists */
 .todo-input-row{display:flex;gap:8px;margin-bottom:14px;}
 .todo-input-row input{flex:1;min-width:0;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-family:'Zen Kaku Gothic New',sans-serif;font-size:14px;background:#fffdf8;outline:none;color:var(--ink);}
 .todo-input-row input:focus{border-color:var(--indigo-soft);}
@@ -137,8 +110,6 @@ h1{font-family:'Shippori Mincho',serif;font-weight:700;font-size:28px;margin:2px
 .todo-footer-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;gap:8px;}
 .todo-count{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-soft);}
 .todo-empty-hint{font-size:12px;color:var(--ink-soft);text-align:center;padding:24px 0;opacity:.65;}
-
-/* Numbered list */
 .numbered-list{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;min-height:8px;}
 .numbered-row{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;background:#fffdf8;border:1px solid var(--line);border-radius:8px;transition:border-color .2s,opacity .2s;}
 .numbered-row.done{border-color:#e2d9be;opacity:.7;}
@@ -156,8 +127,6 @@ h1{font-family:'Shippori Mincho',serif;font-weight:700;font-size:28px;margin:2px
 .numbered-add-row input{flex:1;min-width:0;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-family:'Zen Kaku Gothic New',sans-serif;font-size:14px;background:#fffdf8;outline:none;color:var(--ink);}
 .numbered-add-row input:focus{border-color:var(--indigo-soft);}
 .numbered-empty-hint{font-size:12px;color:var(--ink-soft);text-align:center;padding:20px 0;opacity:.65;}
-
-/* Deadline */
 .deadline-input-block{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
 .deadline-input-block .todo-input-row{margin-bottom:0;}
 .deadline-date-row{display:flex;align-items:center;gap:8px;}
@@ -168,8 +137,6 @@ input[type="date"]:focus{border-color:var(--indigo-soft);}
 .deadline-chip.overdue{border-color:var(--vermillion-soft);color:var(--vermillion);background:rgba(181,57,44,.06);}
 .deadline-chip.soon{border-color:var(--gold);color:var(--gold);background:rgba(176,137,47,.06);}
 .todo-text-wrap{flex:1;display:flex;flex-direction:column;gap:2px;}
-
-/* Entertainment */
 .entame-input-block{display:flex;flex-direction:column;gap:8px;margin-bottom:10px;}
 .entame-cat-row{display:flex;gap:6px;flex-wrap:wrap;}
 .cat-btn{font-size:12px;padding:5px 11px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink-soft);cursor:pointer;transition:background .18s,border-color .18s,color .18s,transform .12s;white-space:nowrap;}
@@ -186,21 +153,13 @@ input[type="date"]:focus{border-color:var(--indigo-soft);}
 .cat-tag-本{background:rgba(181,57,44,.10);color:var(--vermillion);}
 .cat-tag-アニメ{background:rgba(90,140,100,.12);color:#3a7a4a;}
 .cat-tag-その他{background:rgba(107,98,88,.10);color:var(--ink-soft);}
-
-/* Reset/clear buttons */
 .reset-btn{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-soft);background:none;border:1px solid var(--line);border-radius:999px;padding:8px 18px;cursor:pointer;transition:border-color .2s,color .2s,transform .15s;}
 .reset-btn:hover{border-color:var(--vermillion-soft);color:var(--vermillion);}
 .reset-btn:active{transform:scale(.96);}
-
-/* Toast */
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--indigo);color:var(--paper);font-family:'Shippori Mincho',serif;font-size:14px;padding:10px 22px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;letter-spacing:.04em;z-index:9998;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-
-/* Confetti */
 .confetti-piece{position:absolute;left:50%;top:38%;pointer-events:none;}
 @keyframes confetti-burst{0%{transform:translate(0,0) rotate(0deg);opacity:1;}100%{transform:translate(var(--tx),var(--ty)) rotate(var(--rot));opacity:0;}}
-
-/* Install note */
 .install-note{font-size:11px;color:var(--ink-soft);opacity:.6;text-align:center;max-width:320px;line-height:1.6;margin:16px auto 0;}
 </style>
 </head>
@@ -252,14 +211,12 @@ input[type="date"]:focus{border-color:var(--indigo-soft);}
     <button class="tab-btn" data-tab="entame">エンタメ</button>
   </nav>
 
-  <!-- Bingo -->
   <section class="tab-panel active" id="panel-bingo">
     <div class="panel-header"><span class="panel-title">ビンゴ</span></div>
     <div id="bingo-boards-container"></div>
     <button class="add-board-btn" id="add-board-btn">＋ ボードを追加</button>
   </section>
 
-  <!-- Daily -->
   <section class="tab-panel" id="panel-daily">
     <div class="panel-header"><span class="panel-title">Daily</span><span class="todo-count" id="daily-count"></span></div>
     <div class="todo-input-row"><input type="text" id="daily-input" placeholder="今日やることを入力" maxlength="60"><button class="add-btn" id="daily-add">追加</button></div>
@@ -267,7 +224,6 @@ input[type="date"]:focus{border-color:var(--indigo-soft);}
     <div class="todo-footer-row"><span></span><button class="reset-btn" id="daily-clear">リストをクリア</button></div>
   </section>
 
-  <!-- Weekly -->
   <section class="tab-panel" id="panel-weekly">
     <div class="panel-header"><span class="panel-title">Weekly</span><span class="todo-count" id="weekly-count"></span></div>
     <div class="todo-input-row"><input type="text" id="weekly-input" placeholder="今週やることを入力" maxlength="60"><button class="add-btn" id="weekly-add">追加</button></div>
@@ -275,7 +231,6 @@ input[type="date"]:focus{border-color:var(--indigo-soft);}
     <div class="todo-footer-row"><span></span><button class="reset-btn" id="weekly-clear">リストをクリア</button></div>
   </section>
 
-  <!-- Monthly -->
   <section class="tab-panel" id="panel-monthly">
     <div class="panel-header"><span class="panel-title">Monthly</span><span class="todo-count" id="monthly-count"></span></div>
     <div class="todo-input-row"><input type="text" id="monthly-input" placeholder="今月やることを入力" maxlength="60"><button class="add-btn" id="monthly-add">追加</button></div>
@@ -283,7 +238,6 @@ input[type="date"]:focus{border-color:var(--indigo-soft);}
     <div class="todo-footer-row"><span></span><button class="reset-btn" id="monthly-clear">リストをクリア</button></div>
   </section>
 
-  <!-- Yearly -->
   <section class="tab-panel" id="panel-yearly">
     <div class="panel-header"><span class="panel-title">Yearly</span><span class="todo-count" id="yearly-count"></span></div>
     <div class="todo-input-row"><input type="text" id="yearly-input" placeholder="今年やることを入力" maxlength="60"><button class="add-btn" id="yearly-add">追加</button></div>
@@ -291,7 +245,6 @@ input[type="date"]:focus{border-color:var(--indigo-soft);}
     <div class="todo-footer-row"><span></span><button class="reset-btn" id="yearly-clear">リストをクリア</button></div>
   </section>
 
-  <!-- Numbered -->
   <section class="tab-panel" id="panel-numbered">
     <div class="panel-header"><span class="panel-title">リスト</span><span class="todo-count" id="numbered-count"></span></div>
     <div class="numbered-list" id="numbered-list"></div>
@@ -299,7 +252,6 @@ input[type="date"]:focus{border-color:var(--indigo-soft);}
     <div class="todo-footer-row"><span></span><button class="reset-btn" id="numbered-clear">リストをクリア</button></div>
   </section>
 
-  <!-- Someday -->
   <section class="tab-panel" id="panel-someday">
     <div class="panel-header"><span class="panel-title">いつかやること</span><span class="todo-count" id="someday-count"></span></div>
     <div class="todo-input-row"><input type="text" id="someday-input" placeholder="いつかやりたいことを入力" maxlength="60"><button class="add-btn" id="someday-add">追加</button></div>
@@ -307,7 +259,6 @@ input[type="date"]:focus{border-color:var(--indigo-soft);}
     <div class="todo-footer-row"><span></span><button class="reset-btn" id="someday-clear">リストをクリア</button></div>
   </section>
 
-  <!-- Deadline -->
   <section class="tab-panel" id="panel-deadline">
     <div class="panel-header"><span class="panel-title">期限付きのこと</span><span class="todo-count" id="deadline-count"></span></div>
     <div class="deadline-input-block">
@@ -318,7 +269,6 @@ input[type="date"]:focus{border-color:var(--indigo-soft);}
     <div class="todo-footer-row"><span></span><button class="reset-btn" id="deadline-clear">リストをクリア</button></div>
   </section>
 
-  <!-- Waiting -->
   <section class="tab-panel" id="panel-waiting">
     <div class="panel-header"><span class="panel-title">時がきたらやること</span><span class="todo-count" id="waiting-count"></span></div>
     <div class="todo-input-row"><input type="text" id="waiting-input" placeholder="タイミングを待っていることを入力" maxlength="60"><button class="add-btn" id="waiting-add">追加</button></div>
@@ -326,7 +276,6 @@ input[type="date"]:focus{border-color:var(--indigo-soft);}
     <div class="todo-footer-row"><span></span><button class="reset-btn" id="waiting-clear">リストをクリア</button></div>
   </section>
 
-  <!-- Entame -->
   <section class="tab-panel" id="panel-entame">
     <div class="panel-header"><span class="panel-title">エンタメ</span><span class="todo-count" id="entame-count"></span></div>
     <div class="entame-input-block">
@@ -391,33 +340,48 @@ let appData={
   settings:{activeTab:'bingo'}
 };
 
-// ---- Save ----
+// ---- Save ---- 
+// 修正: 300msデバウンス + ページ非表示時に即時保存
 const saveStatusEl=document.getElementById('saveStatus');
 let saveTimers={};
+let pendingKeys=new Set();
 function flashSave(text){
   if(!saveStatusEl)return;
   saveStatusEl.textContent=text;
   clearTimeout(flashSave._t);
   flashSave._t=setTimeout(()=>{saveStatusEl.textContent='';},2000);
 }
+async function doSave(key){
+  if(!currentUser)return;
+  try{
+    await db.collection('users').doc(currentUser.uid).collection('appdata').doc(key).set(appData[key]);
+    pendingKeys.delete(key);
+    if(pendingKeys.size===0)flashSave('保存しました');
+  }catch(e){ flashSave('保存できませんでした'); }
+}
 function scheduleSave(key){
   if(!currentUser)return;
+  pendingKeys.add(key);
   clearTimeout(saveTimers[key]);
   flashSave('保存中...');
-  saveTimers[key]=setTimeout(async()=>{
-    try{
-      await db.collection('users').doc(currentUser.uid).collection('appdata').doc(key).set(appData[key]);
-      flashSave('保存しました');
-    }catch(e){ flashSave('保存できませんでした'); }
-  },1500);
+  saveTimers[key]=setTimeout(()=>doSave(key),300);
 }
+// iOSでページを閉じる前に即時保存
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden&&currentUser&&pendingKeys.size>0){
+    pendingKeys.forEach(key=>{
+      clearTimeout(saveTimers[key]);
+      saveTimers[key]=null;
+      db.collection('users').doc(currentUser.uid).collection('appdata').doc(key).set(appData[key]).catch(()=>{});
+    });
+  }
+});
 
-// ---- Auth ----
+// ---- Auth (Email/Password) ----
 function setLoginError(msg){
   const el=document.getElementById('login-error');
   if(el)el.textContent=msg;
 }
-
 function getLoginErrorMsg(code){
   if(code==='auth/user-not-found'||code==='auth/wrong-password'||code==='auth/invalid-credential')return 'メールアドレスまたはパスワードが間違っています';
   if(code==='auth/email-already-in-use')return 'このメールアドレスはすでに登録されています。ログインしてください';
@@ -457,10 +421,10 @@ document.getElementById('register-btn').addEventListener('click',async()=>{
     setLoginError(getLoginErrorMsg(e.code));
   }
 });
+
 document.getElementById('logout-btn').addEventListener('click',()=>{ auth.signOut(); });
 
 let appInitialized=false;
-
 async function initUserSession(user){
   if(appInitialized)return;
   appInitialized=true;
@@ -471,18 +435,15 @@ async function initUserSession(user){
   showApp();
 }
 
-// メール/パスワード認証のためredirect不要
-
 auth.onAuthStateChanged(async(user)=>{
   if(user){
-    // getRedirectResultより少し遅れて呼ばれる場合もある
     setTimeout(async()=>{
       if(!appInitialized) await initUserSession(user);
-    },500);
+    },300);
   } else {
     setTimeout(()=>{
       if(!appInitialized) showLogin();
-    },1000);
+    },800);
   }
 });
 
