@@ -1,4 +1,4 @@
-const CACHE_NAME = 'todo-bingo-v2';
+const CACHE_NAME = 'todo-bingo-v3';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
