@@ -329,6 +329,8 @@ const firebaseConfig={
 firebase.initializeApp(firebaseConfig);
 const auth=firebase.auth();
 const db=firebase.firestore();
+// オフラインキャッシュ有効化：書き込みをまずIndexedDBに保存→後で同期
+db.enablePersistence().catch(()=>{});
 
 // ---- App state ----
 let currentUser=null;
@@ -340,8 +342,23 @@ let appData={
   settings:{activeTab:'bingo'}
 };
 
+// ---- ローカルバックアップ（同期的・即時） ----
+const LS_KEY='yarukoto_v1';
+function saveToLocal(key){
+  try{
+    const bk=JSON.parse(localStorage.getItem(LS_KEY)||'{}');
+    bk[key]=appData[key];
+    localStorage.setItem(LS_KEY,JSON.stringify(bk));
+  }catch(e){}
+}
+function loadFromLocal(){
+  try{
+    const bk=JSON.parse(localStorage.getItem(LS_KEY)||'{}');
+    Object.keys(bk).forEach(k=>{if(appData[k]!==undefined)appData[k]=bk[k];});
+  }catch(e){}
+}
+
 // ---- Save ---- 
-// 修正: 300msデバウンス + ページ非表示時に即時保存
 const saveStatusEl=document.getElementById('saveStatus');
 let saveTimers={};
 let pendingKeys=new Set();
@@ -361,9 +378,12 @@ async function doSave(key){
 }
 function scheduleSave(key){
   if(!currentUser)return;
+  // まずlocalStorageに即時保存（同期・0ms）
+  saveToLocal(key);
   pendingKeys.add(key);
   clearTimeout(saveTimers[key]);
   flashSave('保存中...');
+  // Firestoreへは300ms後に送信
   saveTimers[key]=setTimeout(()=>doSave(key),300);
 }
 // iOSでページを閉じる前に即時保存
@@ -448,10 +468,21 @@ auth.onAuthStateChanged(async(user)=>{
 });
 
 async function loadAllData(){
+  // まずlocalStorageから即時読み込み（オフラインでも動く）
+  loadFromLocal();
+  // FirestoreからはlocalStorageより新しいデータがあれば上書き
   try{
     const snapshot=await db.collection('users').doc(currentUser.uid).collection('appdata').get();
-    snapshot.forEach(doc=>{ appData[doc.id]=doc.data(); });
-  }catch(e){ console.error('Load failed',e); }
+    if(!snapshot.empty){
+      snapshot.forEach(doc=>{ appData[doc.id]=doc.data(); });
+      // Firestoreのデータが正として、localStorageも更新
+      try{
+        const bk={};
+        snapshot.forEach(doc=>{bk[doc.id]=doc.data();});
+        localStorage.setItem(LS_KEY,JSON.stringify(bk));
+      }catch(e){}
+    }
+  }catch(e){ console.error('Firestore load failed, using local backup',e); }
 }
 
 function showLogin(){
