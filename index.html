@@ -12,932 +12,231 @@
 <meta name="apple-mobile-web-app-title" content="やることノート">
 <link rel="apple-touch-icon" id="appleIcon">
 <link rel="manifest" id="manifestLink">
-<script>
-  (function(){
-    const iconSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">'
-      + '<rect width="200" height="200" rx="36" fill="#2C3C63"/>'
-      + '<circle cx="100" cy="100" r="58" fill="none" stroke="#B5392C" stroke-width="10"/>'
-      + '<text x="100" y="120" font-family="serif" font-size="56" fill="#B5392C" text-anchor="middle" font-weight="700">印</text>'
-      + '</svg>';
-    const iconDataUri = 'data:image/svg+xml,' + encodeURIComponent(iconSvg);
-    document.getElementById('appleIcon').setAttribute('href', iconDataUri);
-
-    const manifest = {
-      name: 'やることノート',
-      short_name: 'ノート',
-      start_url: '.',
-      display: 'standalone',
-      background_color: '#F7F2E7',
-      theme_color: '#2C3C63',
-      icons: [{ src: iconDataUri, sizes: '200x200', type: 'image/svg+xml' }]
-    };
-    const manifestUri = 'data:application/manifest+json,' + encodeURIComponent(JSON.stringify(manifest));
-    document.getElementById('manifestLink').setAttribute('href', manifestUri);
-
-    if('serviceWorker' in navigator){
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(() => {
-          // プレビュー環境やfile://では登録できない。実際にホスティングした際に有効になる。
-        });
-      });
-    }
-  })();
-</script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <style>
-  :root{
-    --paper:#F7F2E7;
-    --paper-dark:#EAE2CF;
-    --ink:#272320;
-    --ink-soft:#6b6258;
-    --indigo:#2C3C63;
-    --indigo-soft:#5b6c92;
-    --vermillion:#B5392C;
-    --vermillion-soft:#c97b6e;
-    --gold:#B0892F;
-    --line:#d8cdb2;
-  }
-
-  *{box-sizing:border-box;}
-
-  html, body{
-    overscroll-behavior:none;
-    touch-action:manipulation;
-    -webkit-tap-highlight-color:transparent;
-  }
-
-  body{
-    margin:0;
-    min-height:100vh;
-    background:
-      radial-gradient(circle at 15% 10%, rgba(176,137,47,0.06), transparent 40%),
-      radial-gradient(circle at 85% 90%, rgba(44,60,99,0.06), transparent 40%),
-      var(--paper);
-    font-family:'Zen Kaku Gothic New', sans-serif;
-    color:var(--ink);
-    display:flex;
-    justify-content:center;
-    padding:32px 16px 60px;
-  }
-
-  .app{
-    width:100%;
-    max-width:480px;
-  }
-
-  header{
-    margin-bottom:22px;
-  }
-
-  .header-row{
-    display:flex;
-    justify-content:space-between;
-    align-items:flex-end;
-    margin-bottom:6px;
-  }
-
-  .eyebrow{
-    font-family:'JetBrains Mono', monospace;
-    font-size:12px;
-    letter-spacing:0.06em;
-    color:var(--ink-soft);
-  }
-
-  .bingo-badge{
-    display:flex;
-    align-items:center;
-    gap:6px;
-    font-family:'JetBrains Mono', monospace;
-    font-size:12px;
-    color:var(--vermillion);
-    border:1px solid var(--vermillion-soft);
-    border-radius:999px;
-    padding:4px 10px 4px 8px;
-    background:rgba(181,57,44,0.06);
-  }
-
-  .bingo-badge .count{
-    font-size:15px;
-    font-weight:700;
-  }
-
-  h1{
-    font-family:'Shippori Mincho', serif;
-    font-weight:700;
-    font-size:30px;
-    margin:2px 0 8px;
-    letter-spacing:0.02em;
-  }
-
-  .subtitle{
-    font-size:13px;
-    line-height:1.7;
-    color:var(--ink-soft);
-    margin:0;
-  }
-
-  .tabbar{
-    display:flex;
-    gap:6px;
-    margin-bottom:22px;
-    overflow-x:auto;
-    padding-bottom:2px;
-    -ms-overflow-style:none;
-    scrollbar-width:none;
-  }
-
-  .tabbar::-webkit-scrollbar{ display:none; }
-
-  .tab-btn{
-    font-family:'JetBrains Mono', monospace;
-    font-size:12px;
-    white-space:nowrap;
-    flex:none;
-    padding:8px 16px;
-    border-radius:999px;
-    border:1px solid var(--line);
-    background:transparent;
-    color:var(--ink-soft);
-    cursor:pointer;
-    transition:background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.15s ease;
-  }
-
-  .tab-btn.active{
-    background:var(--indigo);
-    border-color:var(--indigo);
-    color:var(--paper);
-  }
-
-  .tab-btn:active{
-    transform:scale(0.94);
-  }
-
-  .tab-panel{
-    display:none;
-  }
-
-  .tab-panel.active{
-    display:block;
-  }
-
-  .panel-header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:14px;
-  }
-
-  .panel-title{
-    font-family:'Shippori Mincho', serif;
-    font-weight:700;
-    font-size:18px;
-  }
-
-  .todo-input-row{
-    display:flex;
-    gap:8px;
-    margin-bottom:14px;
-  }
-
-  .todo-input-row input{
-    flex:1;
-    min-width:0;
-    border:1px solid var(--line);
-    border-radius:8px;
-    padding:10px 12px;
-    font-family:'Zen Kaku Gothic New', sans-serif;
-    font-size:14px;
-    background:#fffdf8;
-    outline:none;
-    color:var(--ink);
-  }
-
-  .todo-input-row input:focus{
-    border-color:var(--indigo-soft);
-  }
-
-  .add-btn{
-    font-family:'JetBrains Mono', monospace;
-    font-size:13px;
-    color:var(--paper);
-    background:var(--indigo);
-    border:none;
-    border-radius:8px;
-    padding:0 16px;
-    cursor:pointer;
-    flex:none;
-    transition:transform 0.15s ease;
-  }
-
-  .add-btn:active{
-    transform:scale(0.93);
-  }
-
-  .todo-list{
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-    min-height:8px;
-  }
-
-  .todo-row{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    background:#fffdf8;
-    border:1px solid var(--line);
-    border-radius:8px;
-    padding:8px 10px;
-    transition:border-color 0.2s ease;
-  }
-
-  .todo-row.done{
-    border-color:#e2d9be;
-  }
-
-  .todo-stamp-wrap{
-    width:30px;
-    height:30px;
-    flex:none;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-  }
-
-  .stamp-btn.small{
-    position:static;
-    width:24px;
-    height:24px;
-    margin:0;
-    font-size:10px;
-  }
-
-  .stamp-mark.small{
-    position:static;
-    width:30px;
-    height:30px;
-    margin:0;
-    font-size:13px;
-  }
-
-  .todo-text{
-    flex:1;
-    font-size:13px;
-    line-height:1.5;
-    word-break:break-word;
-  }
-
-  .todo-row.done .todo-text{
-    color:var(--ink-soft);
-    text-decoration:line-through;
-    text-decoration-color:var(--vermillion-soft);
-  }
-
-  .todo-del{
-    flex:none;
-    width:26px;
-    height:26px;
-    border-radius:50%;
-    border:none;
-    background:none;
-    color:var(--ink-soft);
-    font-size:16px;
-    line-height:1;
-    cursor:pointer;
-    transition:color 0.15s ease, transform 0.15s ease;
-  }
-
-  .todo-del:hover{
-    color:var(--vermillion);
-  }
-
-  .todo-del:active{
-    transform:scale(0.85);
-  }
-
-  .todo-empty-hint{
-    font-size:12px;
-    color:var(--ink-soft);
-    text-align:center;
-    padding:24px 0;
-    opacity:0.65;
-  }
-
-  .todo-footer-row{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-top:14px;
-  }
-
-  .todo-count{
-    font-family:'JetBrains Mono', monospace;
-    font-size:11px;
-    color:var(--ink-soft);
-  }
-
-  .board-wrap{
-    position:relative;
-    margin-top:4px;
-  }
-
-  .size-switcher{
-    display:flex;
-    gap:6px;
-    margin-bottom:14px;
-  }
-
-  .size-btn{
-    font-family:'JetBrains Mono', monospace;
-    font-size:11px;
-    padding:5px 14px;
-    border-radius:999px;
-    border:1px solid var(--line);
-    background:transparent;
-    color:var(--ink-soft);
-    cursor:pointer;
-    transition:background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.15s ease;
-  }
-
-  .size-btn.active{
-    background:var(--indigo);
-    border-color:var(--indigo);
-    color:var(--paper);
-  }
-
-  .size-btn:active{
-    transform:scale(0.92);
-  }
-
-  .board{
-    position:relative;
-    display:grid;
-    grid-template-columns:repeat(3, 1fr);
-    gap:10px;
-    aspect-ratio:1/1;
-  }
-
-  .lines-overlay{
-    position:absolute;
-    inset:0;
-    pointer-events:none;
-    overflow:visible;
-  }
-
-  .lines-overlay path{
-    fill:none;
-    stroke:var(--indigo);
-    stroke-width:1.6;
-    stroke-linecap:round;
-    opacity:0;
-    transition:stroke-dashoffset 0.65s cubic-bezier(.2,.8,.2,1), opacity 0.2s ease;
-  }
-
-  .lines-overlay path.achieved{
-    opacity:0.85;
-  }
-
-  .cell{
-    position:relative;
-    border-radius:8px;
-    background:#fffdf8;
-    border:1px solid var(--line);
-    display:flex;
-    flex-direction:column;
-    overflow:hidden;
-    transition:border-color 0.25s ease, background 0.25s ease;
-  }
-
-  .cell.empty{
-    background:transparent;
-    border:1.5px dashed var(--line);
-    align-items:center;
-    justify-content:center;
-    cursor:text;
-    color:var(--ink-soft);
-  }
-
-  .cell.empty:hover{
-    border-color:var(--indigo-soft);
-    color:var(--indigo);
-  }
-
-  .cell.empty:active, .cell-text:active{
-    transform:scale(0.97);
-  }
-
-  .empty-hint{
-    font-size:12px;
-    text-align:center;
-    line-height:1.6;
-    padding:8px;
-    pointer-events:none;
-  }
-
-  .empty-hint .plus{
-    font-size:20px;
-    display:block;
-    margin-bottom:2px;
-    font-family:'JetBrains Mono', monospace;
-  }
-
-  .cell textarea{
-    width:100%;
-    height:100%;
-    border:none;
-    background:transparent;
-    resize:none;
-    font-family:'Zen Kaku Gothic New', sans-serif;
-    font-size:13px;
-    line-height:1.55;
-    padding:10px;
-    color:var(--ink);
-    outline:none;
-  }
-
-  .cell-text{
-    flex:1;
-    padding:10px 10px 6px;
-    font-size:13px;
-    line-height:1.55;
-    white-space:pre-wrap;
-    word-break:break-word;
-    cursor:text;
-  }
-
-  .cell.done .cell-text{
-    color:var(--ink-soft);
-  }
-
-  .stamp-btn{
-    align-self:flex-end;
-    margin:0 6px 6px auto;
-    width:26px;
-    height:26px;
-    border-radius:50%;
-    border:1.4px solid var(--indigo-soft);
-    background:transparent;
-    color:var(--indigo-soft);
-    font-size:11px;
-    font-family:'JetBrains Mono', monospace;
-    cursor:pointer;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    transition:transform 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-  }
-
-  .stamp-btn:hover{
-    border-color:var(--indigo);
-    color:var(--indigo);
-    transform:scale(1.08);
-  }
-
-  .stamp-btn:active{
-    transform:scale(0.88);
-  }
-
-  .stamp-mark{
-    position:absolute;
-    top:50%;
-    right:10px;
-    width:46px;
-    height:46px;
-    margin-top:-23px;
-    border:2.5px solid var(--vermillion);
-    border-radius:50%;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    color:var(--vermillion);
-    font-family:'Shippori Mincho', serif;
-    font-size:18px;
-    font-weight:700;
-    transform:rotate(-10deg) scale(0);
-    opacity:0;
-    transition:transform 0.32s cubic-bezier(.34,1.56,.64,1), opacity 0.2s ease;
-    cursor:pointer;
-    background:rgba(181,57,44,0.04);
-  }
-
-  .cell.done .stamp-mark{
-    transform:rotate(-10deg) scale(1);
-    opacity:1;
-  }
-
-  .stamp-mark:active{
-    transform:rotate(-10deg) scale(0.9) !important;
-  }
-
-  .cell.done .stamp-btn{
-    display:none;
-  }
-
-  .cell.done{
-    border-color:#e2d9be;
-  }
-
-  footer{
-    margin-top:26px;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:10px;
-  }
-
-  .reset-btn{
-    font-family:'JetBrains Mono', monospace;
-    font-size:12px;
-    color:var(--ink-soft);
-    background:none;
-    border:1px solid var(--line);
-    border-radius:999px;
-    padding:8px 18px;
-    cursor:pointer;
-    transition:border-color 0.2s ease, color 0.2s ease;
-  }
-
-  .reset-btn:hover{
-    border-color:var(--vermillion-soft);
-    color:var(--vermillion);
-  }
-
-  .reset-btn:active{
-    transform:scale(0.96);
-  }
-
-  .save-note{
-    font-size:11px;
-    color:var(--ink-soft);
-    opacity:0.75;
-    text-align:center;
-    min-height:14px;
-  }
-
-  .install-note{
-    font-size:11px;
-    color:var(--ink-soft);
-    opacity:0.6;
-    text-align:center;
-    max-width:320px;
-    line-height:1.6;
-  }
-
-
-  .numbered-list{
-    display:flex;
-    flex-direction:column;
-    gap:6px;
-    margin-bottom:12px;
-    min-height:8px;
-  }
-
-  .numbered-row{
-    display:flex;
-    align-items:flex-start;
-    gap:10px;
-    padding:8px 10px;
-    background:#fffdf8;
-    border:1px solid var(--line);
-    border-radius:8px;
-    transition:border-color 0.2s ease, opacity 0.2s ease;
-  }
-
-  .numbered-row.done{
-    border-color:#e2d9be;
-    opacity:0.7;
-  }
-
-  .numbered-num{
-    font-family:'JetBrains Mono', monospace;
-    font-size:12px;
-    color:var(--gold);
-    min-width:20px;
-    padding-top:2px;
-    flex:none;
-    font-weight:700;
-  }
-
-  .numbered-row.done .numbered-num{
-    color:var(--ink-soft);
-  }
-
-  .numbered-text{
-    flex:1;
-    font-size:13px;
-    line-height:1.55;
-    word-break:break-word;
-    padding-top:1px;
-  }
-
-  .numbered-row.done .numbered-text{
-    color:var(--ink-soft);
-    text-decoration:line-through;
-    text-decoration-color:var(--vermillion-soft);
-  }
-
-  .numbered-done-btn{
-    flex:none;
-    width:24px;
-    height:24px;
-    border-radius:50%;
-    border:1.4px solid var(--indigo-soft);
-    background:transparent;
-    color:var(--indigo-soft);
-    font-size:10px;
-    font-family:'JetBrains Mono', monospace;
-    cursor:pointer;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    transition:transform 0.15s ease, border-color 0.15s ease;
-  }
-
-  .numbered-done-btn:active{ transform:scale(0.85); }
-
-  .numbered-row.done .numbered-done-btn{
-    border-color:var(--vermillion);
-    color:var(--vermillion);
-    font-size:13px;
-  }
-
-  .numbered-del{
-    flex:none;
-    width:22px;
-    height:22px;
-    border-radius:50%;
-    border:none;
-    background:none;
-    color:var(--ink-soft);
-    font-size:15px;
-    line-height:1;
-    cursor:pointer;
-    transition:color 0.15s ease, transform 0.15s ease;
-    padding-top:1px;
-  }
-
-  .numbered-del:hover{ color:var(--vermillion); }
-  .numbered-del:active{ transform:scale(0.85); }
-
-  .numbered-add-row{
-    display:flex;
-    gap:8px;
-    margin-bottom:10px;
-  }
-
-  .numbered-add-row input{
-    flex:1;
-    min-width:0;
-    border:1px solid var(--line);
-    border-radius:8px;
-    padding:10px 12px;
-    font-family:'Zen Kaku Gothic New', sans-serif;
-    font-size:14px;
-    background:#fffdf8;
-    outline:none;
-    color:var(--ink);
-  }
-
-  .numbered-add-row input:focus{ border-color:var(--indigo-soft); }
-
-  .numbered-empty-hint{
-    font-size:12px;
-    color:var(--ink-soft);
-    text-align:center;
-    padding:20px 0;
-    opacity:0.65;
-  }
-
-
-  .deadline-input-block{
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-    margin-bottom:14px;
-  }
-
-  .deadline-input-block .todo-input-row{
-    margin-bottom:0;
-  }
-
-  .deadline-date-row{
-    display:flex;
-    align-items:center;
-    gap:8px;
-  }
-
-  .deadline-label{
-    font-family:'JetBrains Mono', monospace;
-    font-size:12px;
-    color:var(--ink-soft);
-    flex:none;
-  }
-
-  input[type="date"]{
-    flex:1;
-    border:1px solid var(--line);
-    border-radius:8px;
-    padding:9px 10px;
-    font-family:'Zen Kaku Gothic New', sans-serif;
-    font-size:14px;
-    background:#fffdf8;
-    outline:none;
-    color:var(--ink);
-    -webkit-appearance:none;
-  }
-
-  input[type="date"]:focus{
-    border-color:var(--indigo-soft);
-  }
-
-  .deadline-chip{
-    display:inline-block;
-    font-family:'JetBrains Mono', monospace;
-    font-size:10px;
-    padding:2px 7px;
-    border-radius:999px;
-    border:1px solid var(--line);
-    color:var(--ink-soft);
-    white-space:nowrap;
-    margin-top:3px;
-  }
-
-  .deadline-chip.overdue{
-    border-color:var(--vermillion-soft);
-    color:var(--vermillion);
-    background:rgba(181,57,44,0.06);
-  }
-
-  .deadline-chip.soon{
-    border-color:var(--gold);
-    color:var(--gold);
-    background:rgba(176,137,47,0.06);
-  }
-
-  .todo-text-wrap{
-    flex:1;
-    display:flex;
-    flex-direction:column;
-    gap:2px;
-  }
-
-
-  /* ---- エンタメ ---- */
-  .entame-input-block{
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-    margin-bottom:10px;
-  }
-
-  .entame-cat-row{
-    display:flex;
-    gap:6px;
-    flex-wrap:wrap;
-  }
-
-  .cat-btn{
-    font-size:12px;
-    padding:5px 11px;
-    border-radius:999px;
-    border:1px solid var(--line);
-    background:transparent;
-    color:var(--ink-soft);
-    cursor:pointer;
-    transition:background 0.18s, border-color 0.18s, color 0.18s, transform 0.12s;
-    white-space:nowrap;
-  }
-
-  .cat-btn.active{
-    background:var(--indigo);
-    border-color:var(--indigo);
-    color:var(--paper);
-  }
-
-  .cat-btn:active{ transform:scale(0.92); }
-
-  .entame-filter-row{
-    display:flex;
-    gap:5px;
-    overflow-x:auto;
-    padding-bottom:2px;
-    margin-bottom:12px;
-    -ms-overflow-style:none;
-    scrollbar-width:none;
-  }
-
-  .entame-filter-row::-webkit-scrollbar{ display:none; }
-
-  .filter-btn{
-    font-family:'JetBrains Mono', monospace;
-    font-size:11px;
-    padding:4px 11px;
-    border-radius:999px;
-    border:1px solid var(--line);
-    background:transparent;
-    color:var(--ink-soft);
-    cursor:pointer;
-    white-space:nowrap;
-    flex:none;
-    transition:background 0.18s, border-color 0.18s, color 0.18s, transform 0.12s;
-  }
-
-  .filter-btn.active{
-    background:var(--gold);
-    border-color:var(--gold);
-    color:var(--paper);
-  }
-
-  .filter-btn:active{ transform:scale(0.92); }
-
-  .entame-cat-tag{
-    display:inline-block;
-    font-family:'JetBrains Mono', monospace;
-    font-size:10px;
-    padding:2px 7px;
-    border-radius:999px;
-    margin-right:6px;
-    flex:none;
-  }
-
-  .cat-tag-映画 { background:rgba(44,60,99,0.12); color:var(--indigo); }
-  .cat-tag-ドラマ{ background:rgba(176,137,47,0.12); color:var(--gold); }
-  .cat-tag-本    { background:rgba(181,57,44,0.10); color:var(--vermillion); }
-  .cat-tag-アニメ{ background:rgba(90,140,100,0.12); color:#3a7a4a; }
-  .cat-tag-その他{ background:rgba(107,98,88,0.10); color:var(--ink-soft); }
-
-  .toast{
-    position:fixed;
-    bottom:28px;
-    left:50%;
-    transform:translateX(-50%) translateY(10px);
-    background:var(--indigo);
-    color:var(--paper);
-    font-family:'Shippori Mincho', serif;
-    font-size:14px;
-    padding:10px 22px;
-    border-radius:999px;
-    opacity:0;
-    pointer-events:none;
-    transition:opacity 0.3s ease, transform 0.3s ease;
-    letter-spacing:0.04em;
-  }
-
-  .toast.show{
-    opacity:1;
-    transform:translateX(-50%) translateY(0);
-  }
-
-  .confetti-piece{
-    position:absolute;
-    left:50%;
-    top:38%;
-    pointer-events:none;
-  }
-
-  @keyframes confetti-burst{
-    0%{ transform:translate(0,0) rotate(0deg); opacity:1; }
-    100%{ transform:translate(var(--tx), var(--ty)) rotate(var(--rot)); opacity:0; }
-  }
-
-  .backup-block{
-    margin-top:6px;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:8px;
-    width:100%;
-  }
-
-  .backup-buttons{
-    display:flex;
-    gap:8px;
-  }
-
-  #backupArea{
-    display:none;
-    width:100%;
-    height:120px;
-    margin-top:4px;
-    font-family:'JetBrains Mono', monospace;
-    font-size:11px;
-    padding:8px;
-    border:1px solid var(--line);
-    border-radius:8px;
-    background:#fffdf8;
-    color:var(--ink);
-  }
+:root{
+  --paper:#F7F2E7;--paper-dark:#EAE2CF;--ink:#272320;--ink-soft:#6b6258;
+  --indigo:#2C3C63;--indigo-soft:#5b6c92;--vermillion:#B5392C;--vermillion-soft:#c97b6e;
+  --gold:#B0892F;--line:#d8cdb2;
+}
+*{box-sizing:border-box;}
+html,body{overscroll-behavior:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+body{margin:0;min-height:100vh;background:radial-gradient(circle at 15% 10%,rgba(176,137,47,.06),transparent 40%),radial-gradient(circle at 85% 90%,rgba(44,60,99,.06),transparent 40%),var(--paper);font-family:'Zen Kaku Gothic New',sans-serif;color:var(--ink);}
+
+/* Loading */
+#loading-screen{position:fixed;inset:0;background:var(--paper);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;}
+.loading-logo{font-family:'Shippori Mincho',serif;font-size:28px;font-weight:700;color:var(--indigo);margin-bottom:20px;}
+.loading-spinner{width:32px;height:32px;border:2.5px solid var(--line);border-top-color:var(--indigo);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* Login */
+#login-screen{display:none;min-height:100vh;align-items:center;justify-content:center;flex-direction:column;padding:32px 20px;}
+.login-card{background:#fffdf8;border:1px solid var(--line);border-radius:16px;padding:36px 28px;max-width:360px;width:100%;text-align:center;}
+.login-card h1{font-family:'Shippori Mincho',serif;font-size:26px;margin:0 0 8px;color:var(--ink);}
+.login-card p{font-size:13px;color:var(--ink-soft);margin:0 0 28px;line-height:1.7;}
+.google-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px 20px;border:1px solid var(--line);border-radius:999px;background:#fffdf8;font-family:'Zen Kaku Gothic New',sans-serif;font-size:14px;color:var(--ink);cursor:pointer;transition:background .2s,border-color .2s,transform .15s;}
+.google-btn:hover{background:var(--paper-dark);border-color:var(--indigo-soft);}
+.google-btn:active{transform:scale(.96);}
+.google-icon{width:20px;height:20px;flex:none;}
+.login-note{font-size:11px;color:var(--ink-soft);margin-top:12px;line-height:1.6;}
+
+/* Main app */
+#app{display:none;max-width:480px;margin:0 auto;padding:20px 16px 60px;}
+
+/* User bar */
+.user-bar{display:flex;align-items:center;gap:8px;margin-bottom:18px;}
+.user-avatar{width:28px;height:28px;border-radius:50%;border:1px solid var(--line);object-fit:cover;flex:none;}
+.user-display-name{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-soft);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.logout-btn{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-soft);background:none;border:1px solid var(--line);border-radius:999px;padding:5px 12px;cursor:pointer;flex:none;transition:border-color .2s,color .2s,transform .15s;}
+.logout-btn:active{transform:scale(.94);}
+
+/* Header */
+header{margin-bottom:18px;}
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.06em;color:var(--ink-soft);}
+h1{font-family:'Shippori Mincho',serif;font-weight:700;font-size:28px;margin:2px 0 6px;letter-spacing:.02em;}
+.subtitle{font-size:13px;line-height:1.7;color:var(--ink-soft);margin:0;}
+
+/* Save status */
+.save-bar{min-height:14px;text-align:center;margin-bottom:4px;}
+.save-status{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-soft);}
+
+/* Tabs */
+.tabbar{display:flex;gap:6px;margin-bottom:20px;overflow-x:auto;padding-bottom:2px;-ms-overflow-style:none;scrollbar-width:none;}
+.tabbar::-webkit-scrollbar{display:none;}
+.tab-btn{font-family:'JetBrains Mono',monospace;font-size:12px;white-space:nowrap;flex:none;padding:8px 16px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink-soft);cursor:pointer;transition:background .2s,border-color .2s,color .2s,transform .15s;}
+.tab-btn.active{background:var(--indigo);border-color:var(--indigo);color:var(--paper);}
+.tab-btn:active{transform:scale(.94);}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+/* Panel header */
+.panel-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.panel-title{font-family:'Shippori Mincho',serif;font-weight:700;font-size:18px;}
+
+/* Bingo badge */
+.bingo-badge{display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--vermillion);border:1px solid var(--vermillion-soft);border-radius:999px;padding:4px 10px 4px 8px;background:rgba(181,57,44,.06);}
+.bingo-badge .count{font-size:15px;font-weight:700;}
+
+/* Bingo boards */
+.bingo-board-card{background:#fffdf8;border:1px solid var(--line);border-radius:12px;padding:14px 12px 12px;margin-bottom:18px;position:relative;}
+.board-card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.board-card-title{font-family:'Shippori Mincho',serif;font-weight:700;font-size:16px;color:var(--ink);outline:none;border-bottom:1px dashed transparent;padding:2px 4px;min-width:60px;max-width:200px;border-radius:4px;cursor:text;}
+.board-card-title:focus{border-bottom-color:var(--indigo-soft);background:rgba(44,60,99,.04);}
+.size-switcher{display:flex;gap:6px;margin-bottom:10px;}
+.size-btn{font-size:11px;padding:5px 14px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink-soft);cursor:pointer;transition:background .18s,border-color .18s,color .18s,transform .12s;}
+.size-btn.active{background:var(--indigo);border-color:var(--indigo);color:var(--paper);}
+.size-btn:active{transform:scale(.92);}
+.board-wrap{position:relative;margin-top:0;}
+.board{display:grid;gap:6px;aspect-ratio:1/1;}
+.lines-overlay{position:absolute;inset:0;pointer-events:none;overflow:visible;}
+.lines-overlay path{fill:none;stroke:var(--indigo);stroke-width:1.6;stroke-linecap:round;opacity:0;transition:stroke-dashoffset .65s cubic-bezier(.2,.8,.2,1),opacity .2s ease;}
+.lines-overlay path.achieved{opacity:.85;}
+.cell{position:relative;border-radius:8px;background:#fffdf8;border:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden;transition:border-color .25s,background .25s;}
+.cell.empty{background:transparent;border:1.5px dashed var(--line);align-items:center;justify-content:center;cursor:text;color:var(--ink-soft);}
+.cell.empty:active{transform:scale(.97);}
+.empty-hint{font-size:13px;text-align:center;line-height:1.6;padding:8px;pointer-events:none;}
+.empty-hint .plus{font-size:20px;display:block;margin-bottom:2px;font-family:'JetBrains Mono',monospace;}
+.cell textarea{width:100%;height:100%;border:none;background:transparent;resize:none;font-family:'Zen Kaku Gothic New',sans-serif;font-size:13px;line-height:1.55;padding:10px;color:var(--ink);outline:none;}
+.cell-text{flex:1;padding:10px 10px 6px;white-space:pre-wrap;word-break:break-word;cursor:text;}
+.cell.done .cell-text{color:var(--ink-soft);}
+.stamp-btn{align-self:flex-end;margin:0 6px 6px auto;border-radius:50%;border:1.4px solid var(--indigo-soft);background:transparent;color:var(--indigo-soft);font-family:'JetBrains Mono',monospace;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s,border-color .15s,color .15s;}
+.stamp-btn:active{transform:scale(.88);}
+.stamp-mark{position:absolute;top:50%;right:10px;border:2.5px solid var(--vermillion);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--vermillion);font-family:'Shippori Mincho',serif;font-weight:700;transform:rotate(-10deg) scale(0);opacity:0;transition:transform .32s cubic-bezier(.34,1.56,.64,1),opacity .2s;cursor:pointer;background:rgba(181,57,44,.04);}
+.cell.done .stamp-mark{transform:rotate(-10deg) scale(1);opacity:1;}
+.stamp-mark:active{transform:rotate(-10deg) scale(.9)!important;}
+.cell.done .stamp-btn{display:none;}
+.cell.done{border-color:#e2d9be;}
+.board-card-footer{display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:8px;}
+.delete-board-btn{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-soft);background:none;border:1px solid var(--line);border-radius:999px;padding:6px 14px;cursor:pointer;transition:border-color .2s,color .2s,transform .15s;}
+.delete-board-btn:active{transform:scale(.94);}
+.add-board-btn{display:block;width:100%;font-family:'Zen Kaku Gothic New',sans-serif;font-size:14px;color:var(--indigo);background:transparent;border:1.5px dashed var(--indigo-soft);border-radius:10px;padding:14px;cursor:pointer;text-align:center;margin-bottom:10px;transition:background .2s,border-color .2s,transform .15s;}
+.add-board-btn:hover{background:rgba(44,60,99,.05);border-color:var(--indigo);}
+.add-board-btn:active{transform:scale(.98);}
+.bingo-board-card .toast{position:absolute;bottom:auto;top:8px;left:50%;transform:translateX(-50%) translateY(-4px);font-size:12px;padding:6px 16px;pointer-events:none;opacity:0;transition:opacity .3s,transform .3s;z-index:10;}
+.bingo-board-card .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* Todo lists */
+.todo-input-row{display:flex;gap:8px;margin-bottom:14px;}
+.todo-input-row input{flex:1;min-width:0;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-family:'Zen Kaku Gothic New',sans-serif;font-size:14px;background:#fffdf8;outline:none;color:var(--ink);}
+.todo-input-row input:focus{border-color:var(--indigo-soft);}
+.add-btn{font-family:'Zen Kaku Gothic New',sans-serif;font-size:13px;color:var(--paper);background:var(--indigo);border:none;border-radius:8px;padding:0 16px;cursor:pointer;flex:none;transition:transform .15s;}
+.add-btn:active{transform:scale(.93);}
+.todo-list{display:flex;flex-direction:column;gap:8px;min-height:8px;}
+.todo-row{display:flex;align-items:center;gap:10px;background:#fffdf8;border:1px solid var(--line);border-radius:8px;padding:8px 10px;transition:border-color .2s;}
+.todo-row.done{border-color:#e2d9be;}
+.todo-stamp-wrap{width:30px;height:30px;flex:none;display:flex;align-items:center;justify-content:center;}
+.stamp-btn.small{position:static;width:24px;height:24px;margin:0;font-size:10px;}
+.stamp-mark.small{position:static;width:30px;height:30px;margin:0;font-size:13px;transform:rotate(-10deg) scale(1);opacity:1;}
+.todo-text{flex:1;font-size:13px;line-height:1.5;word-break:break-word;}
+.todo-row.done .todo-text{color:var(--ink-soft);text-decoration:line-through;text-decoration-color:var(--vermillion-soft);}
+.todo-del{flex:none;width:26px;height:26px;border-radius:50%;border:none;background:none;color:var(--ink-soft);font-size:16px;line-height:1;cursor:pointer;transition:color .15s,transform .15s;}
+.todo-del:hover{color:var(--vermillion);}
+.todo-del:active{transform:scale(.85);}
+.todo-footer-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;gap:8px;}
+.todo-count{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-soft);}
+.todo-empty-hint{font-size:12px;color:var(--ink-soft);text-align:center;padding:24px 0;opacity:.65;}
+
+/* Numbered list */
+.numbered-list{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;min-height:8px;}
+.numbered-row{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;background:#fffdf8;border:1px solid var(--line);border-radius:8px;transition:border-color .2s,opacity .2s;}
+.numbered-row.done{border-color:#e2d9be;opacity:.7;}
+.numbered-num{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold);min-width:20px;padding-top:2px;flex:none;font-weight:700;}
+.numbered-row.done .numbered-num{color:var(--ink-soft);}
+.numbered-text{flex:1;font-size:13px;line-height:1.55;word-break:break-word;padding-top:1px;}
+.numbered-row.done .numbered-text{color:var(--ink-soft);text-decoration:line-through;text-decoration-color:var(--vermillion-soft);}
+.numbered-done-btn{flex:none;width:24px;height:24px;border-radius:50%;border:1.4px solid var(--indigo-soft);background:transparent;color:var(--indigo-soft);font-size:10px;font-family:'JetBrains Mono',monospace;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s,border-color .15s;}
+.numbered-done-btn:active{transform:scale(.85);}
+.numbered-row.done .numbered-done-btn{border-color:var(--vermillion);color:var(--vermillion);font-size:13px;}
+.numbered-del{flex:none;width:22px;height:22px;border-radius:50%;border:none;background:none;color:var(--ink-soft);font-size:15px;line-height:1;cursor:pointer;transition:color .15s,transform .15s;padding-top:1px;}
+.numbered-del:hover{color:var(--vermillion);}
+.numbered-del:active{transform:scale(.85);}
+.numbered-add-row{display:flex;gap:8px;margin-bottom:10px;}
+.numbered-add-row input{flex:1;min-width:0;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-family:'Zen Kaku Gothic New',sans-serif;font-size:14px;background:#fffdf8;outline:none;color:var(--ink);}
+.numbered-add-row input:focus{border-color:var(--indigo-soft);}
+.numbered-empty-hint{font-size:12px;color:var(--ink-soft);text-align:center;padding:20px 0;opacity:.65;}
+
+/* Deadline */
+.deadline-input-block{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+.deadline-input-block .todo-input-row{margin-bottom:0;}
+.deadline-date-row{display:flex;align-items:center;gap:8px;}
+.deadline-label{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-soft);flex:none;}
+input[type="date"]{flex:1;border:1px solid var(--line);border-radius:8px;padding:9px 10px;font-family:'Zen Kaku Gothic New',sans-serif;font-size:14px;background:#fffdf8;outline:none;color:var(--ink);-webkit-appearance:none;}
+input[type="date"]:focus{border-color:var(--indigo-soft);}
+.deadline-chip{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 7px;border-radius:999px;border:1px solid var(--line);color:var(--ink-soft);white-space:nowrap;margin-top:3px;}
+.deadline-chip.overdue{border-color:var(--vermillion-soft);color:var(--vermillion);background:rgba(181,57,44,.06);}
+.deadline-chip.soon{border-color:var(--gold);color:var(--gold);background:rgba(176,137,47,.06);}
+.todo-text-wrap{flex:1;display:flex;flex-direction:column;gap:2px;}
+
+/* Entertainment */
+.entame-input-block{display:flex;flex-direction:column;gap:8px;margin-bottom:10px;}
+.entame-cat-row{display:flex;gap:6px;flex-wrap:wrap;}
+.cat-btn{font-size:12px;padding:5px 11px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink-soft);cursor:pointer;transition:background .18s,border-color .18s,color .18s,transform .12s;white-space:nowrap;}
+.cat-btn.active{background:var(--indigo);border-color:var(--indigo);color:var(--paper);}
+.cat-btn:active{transform:scale(.92);}
+.entame-filter-row{display:flex;gap:5px;overflow-x:auto;padding-bottom:2px;margin-bottom:12px;-ms-overflow-style:none;scrollbar-width:none;}
+.entame-filter-row::-webkit-scrollbar{display:none;}
+.filter-btn{font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 11px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink-soft);cursor:pointer;white-space:nowrap;flex:none;transition:background .18s,border-color .18s,color .18s,transform .12s;}
+.filter-btn.active{background:var(--gold);border-color:var(--gold);color:var(--paper);}
+.filter-btn:active{transform:scale(.92);}
+.entame-cat-tag{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 7px;border-radius:999px;margin-right:6px;flex:none;}
+.cat-tag-映画{background:rgba(44,60,99,.12);color:var(--indigo);}
+.cat-tag-ドラマ{background:rgba(176,137,47,.12);color:var(--gold);}
+.cat-tag-本{background:rgba(181,57,44,.10);color:var(--vermillion);}
+.cat-tag-アニメ{background:rgba(90,140,100,.12);color:#3a7a4a;}
+.cat-tag-その他{background:rgba(107,98,88,.10);color:var(--ink-soft);}
+
+/* Reset/clear buttons */
+.reset-btn{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-soft);background:none;border:1px solid var(--line);border-radius:999px;padding:8px 18px;cursor:pointer;transition:border-color .2s,color .2s,transform .15s;}
+.reset-btn:hover{border-color:var(--vermillion-soft);color:var(--vermillion);}
+.reset-btn:active{transform:scale(.96);}
+
+/* Toast */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--indigo);color:var(--paper);font-family:'Shippori Mincho',serif;font-size:14px;padding:10px 22px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;letter-spacing:.04em;z-index:9998;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* Confetti */
+.confetti-piece{position:absolute;left:50%;top:38%;pointer-events:none;}
+@keyframes confetti-burst{0%{transform:translate(0,0) rotate(0deg);opacity:1;}100%{transform:translate(var(--tx),var(--ty)) rotate(var(--rot));opacity:0;}}
+
+/* Install note */
+.install-note{font-size:11px;color:var(--ink-soft);opacity:.6;text-align:center;max-width:320px;line-height:1.6;margin:16px auto 0;}
 </style>
 </head>
 <body>
 
-<div class="app">
-  <header>
-    <div class="header-row">
-      <span class="eyebrow" id="dateLabel"></span>
-    </div>
+<div id="loading-screen">
+  <div class="loading-logo">やることノート</div>
+  <div class="loading-spinner"></div>
+</div>
+
+<div id="login-screen">
+  <div class="login-card">
     <h1>やることノート</h1>
-    <p class="subtitle">タブを切り替えて、ビンゴ・今日・今週・今月・今年のやることを記録する。印を押すと達成感が残る。</p>
+    <p>Googleアカウントでログインすると<br>どの端末からでも同じデータを使えます</p>
+    <button class="google-btn" id="google-login-btn">
+      <svg class="google-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Googleでログイン
+    </button>
+    <p class="login-note">ログインするとデータはGoogleのサーバーに保存され、機種変更後もそのまま使えます</p>
+  </div>
+</div>
+
+<div id="app">
+  <div class="user-bar">
+    <img class="user-avatar" id="user-avatar" src="" alt="">
+    <span class="user-display-name" id="user-name"></span>
+    <button class="logout-btn" id="logout-btn">ログアウト</button>
+  </div>
+
+  <header>
+    <div class="eyebrow" id="dateLabel"></div>
+    <h1>やることノート</h1>
+    <p class="subtitle">タブを切り替えて、ビンゴ・今日・今週・今月・今年のやることを記録する。</p>
   </header>
+
+  <div class="save-bar"><span class="save-status" id="saveStatus"></span></div>
 
   <nav class="tabbar" id="tabbar">
     <button class="tab-btn active" data-tab="bingo">ビンゴ</button>
@@ -952,161 +251,83 @@
     <button class="tab-btn" data-tab="entame">エンタメ</button>
   </nav>
 
+  <!-- Bingo -->
   <section class="tab-panel active" id="panel-bingo">
-    <div class="panel-header">
-      <span class="panel-title">ビンゴ</span>
-      <div class="bingo-badge">ビンゴ <span class="count" id="bingoCount">0</span></div>
-    </div>
-    <div class="size-switcher" id="sizeSwitcher">
-      <button class="size-btn active" data-size="3">3×3</button>
-      <button class="size-btn" data-size="4">4×4</button>
-      <button class="size-btn" data-size="5">5×5</button>
-    </div>
-    <div class="board-wrap">
-      <div class="board" id="board"></div>
-      <svg class="lines-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" id="linesSvg"></svg>
-    </div>
-    <footer>
-      <button class="reset-btn" id="resetBtn">盤面をリセット</button>
-      <p class="save-note"><span id="saveStatus"></span></p>
-    </footer>
+    <div class="panel-header"><span class="panel-title">ビンゴ</span></div>
+    <div id="bingo-boards-container"></div>
+    <button class="add-board-btn" id="add-board-btn">＋ ボードを追加</button>
   </section>
 
+  <!-- Daily -->
   <section class="tab-panel" id="panel-daily">
-    <div class="panel-header">
-      <span class="panel-title">Daily</span>
-    </div>
-    <div class="todo-input-row">
-      <input type="text" id="daily-input" placeholder="今日やることを入力" maxlength="60">
-      <button class="add-btn" id="daily-add">追加</button>
-    </div>
+    <div class="panel-header"><span class="panel-title">Daily</span><span class="todo-count" id="daily-count"></span></div>
+    <div class="todo-input-row"><input type="text" id="daily-input" placeholder="今日やることを入力" maxlength="60"><button class="add-btn" id="daily-add">追加</button></div>
     <div class="todo-list" id="daily-list"></div>
-    <div class="todo-footer-row">
-      <span class="todo-count" id="daily-count"></span>
-      <button class="reset-btn" id="daily-clear">リストをクリア</button>
-    </div>
+    <div class="todo-footer-row"><span></span><button class="reset-btn" id="daily-clear">リストをクリア</button></div>
   </section>
 
+  <!-- Weekly -->
   <section class="tab-panel" id="panel-weekly">
-    <div class="panel-header">
-      <span class="panel-title">Weekly</span>
-    </div>
-    <div class="todo-input-row">
-      <input type="text" id="weekly-input" placeholder="今週やることを入力" maxlength="60">
-      <button class="add-btn" id="weekly-add">追加</button>
-    </div>
+    <div class="panel-header"><span class="panel-title">Weekly</span><span class="todo-count" id="weekly-count"></span></div>
+    <div class="todo-input-row"><input type="text" id="weekly-input" placeholder="今週やることを入力" maxlength="60"><button class="add-btn" id="weekly-add">追加</button></div>
     <div class="todo-list" id="weekly-list"></div>
-    <div class="todo-footer-row">
-      <span class="todo-count" id="weekly-count"></span>
-      <button class="reset-btn" id="weekly-clear">リストをクリア</button>
-    </div>
+    <div class="todo-footer-row"><span></span><button class="reset-btn" id="weekly-clear">リストをクリア</button></div>
   </section>
 
+  <!-- Monthly -->
   <section class="tab-panel" id="panel-monthly">
-    <div class="panel-header">
-      <span class="panel-title">Monthly</span>
-    </div>
-    <div class="todo-input-row">
-      <input type="text" id="monthly-input" placeholder="今月やることを入力" maxlength="60">
-      <button class="add-btn" id="monthly-add">追加</button>
-    </div>
+    <div class="panel-header"><span class="panel-title">Monthly</span><span class="todo-count" id="monthly-count"></span></div>
+    <div class="todo-input-row"><input type="text" id="monthly-input" placeholder="今月やることを入力" maxlength="60"><button class="add-btn" id="monthly-add">追加</button></div>
     <div class="todo-list" id="monthly-list"></div>
-    <div class="todo-footer-row">
-      <span class="todo-count" id="monthly-count"></span>
-      <button class="reset-btn" id="monthly-clear">リストをクリア</button>
-    </div>
+    <div class="todo-footer-row"><span></span><button class="reset-btn" id="monthly-clear">リストをクリア</button></div>
   </section>
 
+  <!-- Yearly -->
   <section class="tab-panel" id="panel-yearly">
-    <div class="panel-header">
-      <span class="panel-title">Yearly</span>
-    </div>
-    <div class="todo-input-row">
-      <input type="text" id="yearly-input" placeholder="今年やることを入力" maxlength="60">
-      <button class="add-btn" id="yearly-add">追加</button>
-    </div>
+    <div class="panel-header"><span class="panel-title">Yearly</span><span class="todo-count" id="yearly-count"></span></div>
+    <div class="todo-input-row"><input type="text" id="yearly-input" placeholder="今年やることを入力" maxlength="60"><button class="add-btn" id="yearly-add">追加</button></div>
     <div class="todo-list" id="yearly-list"></div>
-    <div class="todo-footer-row">
-      <span class="todo-count" id="yearly-count"></span>
-      <button class="reset-btn" id="yearly-clear">リストをクリア</button>
-    </div>
+    <div class="todo-footer-row"><span></span><button class="reset-btn" id="yearly-clear">リストをクリア</button></div>
   </section>
 
+  <!-- Numbered -->
   <section class="tab-panel" id="panel-numbered">
-    <div class="panel-header">
-      <span class="panel-title">リスト</span>
-      <span class="todo-count" id="numbered-count"></span>
-    </div>
+    <div class="panel-header"><span class="panel-title">リスト</span><span class="todo-count" id="numbered-count"></span></div>
     <div class="numbered-list" id="numbered-list"></div>
-    <div class="numbered-add-row">
-      <input type="text" id="numbered-input" placeholder="やることを入力してEnter" maxlength="60">
-      <button class="add-btn" id="numbered-add">追加</button>
-    </div>
-    <div class="todo-footer-row">
-      <span></span>
-      <button class="reset-btn" id="numbered-clear">リストをクリア</button>
-    </div>
+    <div class="numbered-add-row"><input type="text" id="numbered-input" placeholder="やることを入力してEnter" maxlength="60"><button class="add-btn" id="numbered-add">追加</button></div>
+    <div class="todo-footer-row"><span></span><button class="reset-btn" id="numbered-clear">リストをクリア</button></div>
   </section>
 
+  <!-- Someday -->
   <section class="tab-panel" id="panel-someday">
-    <div class="panel-header">
-      <span class="panel-title">いつかやること</span>
-      <span class="todo-count" id="someday-count"></span>
-    </div>
-    <div class="todo-input-row">
-      <input type="text" id="someday-input" placeholder="いつかやりたいことを入力" maxlength="60">
-      <button class="add-btn" id="someday-add">追加</button>
-    </div>
+    <div class="panel-header"><span class="panel-title">いつかやること</span><span class="todo-count" id="someday-count"></span></div>
+    <div class="todo-input-row"><input type="text" id="someday-input" placeholder="いつかやりたいことを入力" maxlength="60"><button class="add-btn" id="someday-add">追加</button></div>
     <div class="todo-list" id="someday-list"></div>
-    <div class="todo-footer-row">
-      <span></span>
-      <button class="reset-btn" id="someday-clear">リストをクリア</button>
-    </div>
+    <div class="todo-footer-row"><span></span><button class="reset-btn" id="someday-clear">リストをクリア</button></div>
   </section>
 
+  <!-- Deadline -->
   <section class="tab-panel" id="panel-deadline">
-    <div class="panel-header">
-      <span class="panel-title">期限付きのこと</span>
-      <span class="todo-count" id="deadline-count"></span>
-    </div>
+    <div class="panel-header"><span class="panel-title">期限付きのこと</span><span class="todo-count" id="deadline-count"></span></div>
     <div class="deadline-input-block">
-      <div class="todo-input-row">
-        <input type="text" id="deadline-input" placeholder="やることを入力" maxlength="60">
-      </div>
-      <div class="deadline-date-row">
-        <label class="deadline-label">期限</label>
-        <input type="date" id="deadline-date">
-        <button class="add-btn" id="deadline-add">追加</button>
-      </div>
+      <div class="todo-input-row"><input type="text" id="deadline-input" placeholder="やることを入力" maxlength="60"></div>
+      <div class="deadline-date-row"><label class="deadline-label">期限</label><input type="date" id="deadline-date"><button class="add-btn" id="deadline-add">追加</button></div>
     </div>
     <div class="todo-list" id="deadline-list"></div>
-    <div class="todo-footer-row">
-      <span></span>
-      <button class="reset-btn" id="deadline-clear">リストをクリア</button>
-    </div>
+    <div class="todo-footer-row"><span></span><button class="reset-btn" id="deadline-clear">リストをクリア</button></div>
   </section>
 
+  <!-- Waiting -->
   <section class="tab-panel" id="panel-waiting">
-    <div class="panel-header">
-      <span class="panel-title">時がきたらやること</span>
-      <span class="todo-count" id="waiting-count"></span>
-    </div>
-    <div class="todo-input-row">
-      <input type="text" id="waiting-input" placeholder="タイミングを待っていることを入力" maxlength="60">
-      <button class="add-btn" id="waiting-add">追加</button>
-    </div>
+    <div class="panel-header"><span class="panel-title">時がきたらやること</span><span class="todo-count" id="waiting-count"></span></div>
+    <div class="todo-input-row"><input type="text" id="waiting-input" placeholder="タイミングを待っていることを入力" maxlength="60"><button class="add-btn" id="waiting-add">追加</button></div>
     <div class="todo-list" id="waiting-list"></div>
-    <div class="todo-footer-row">
-      <span></span>
-      <button class="reset-btn" id="waiting-clear">リストをクリア</button>
-    </div>
+    <div class="todo-footer-row"><span></span><button class="reset-btn" id="waiting-clear">リストをクリア</button></div>
   </section>
 
+  <!-- Entame -->
   <section class="tab-panel" id="panel-entame">
-    <div class="panel-header">
-      <span class="panel-title">エンタメ</span>
-      <span class="todo-count" id="entame-count"></span>
-    </div>
+    <div class="panel-header"><span class="panel-title">エンタメ</span><span class="todo-count" id="entame-count"></span></div>
     <div class="entame-input-block">
       <div class="entame-cat-row" id="entame-cats">
         <button class="cat-btn active" data-cat="映画">🎬 映画</button>
@@ -1115,12 +336,9 @@
         <button class="cat-btn" data-cat="アニメ">✨ アニメ</button>
         <button class="cat-btn" data-cat="その他">＋ その他</button>
       </div>
-      <div class="todo-input-row">
-        <input type="text" id="entame-input" placeholder="タイトルを入力" maxlength="60">
-        <button class="add-btn" id="entame-add">追加</button>
-      </div>
+      <div class="todo-input-row"><input type="text" id="entame-input" placeholder="タイトルを入力" maxlength="60"><button class="add-btn" id="entame-add">追加</button></div>
     </div>
-    <div class="entame-filter-row" id="entame-filters">
+    <div class="entame-filter-row">
       <button class="filter-btn active" data-filter="all">すべて</button>
       <button class="filter-btn" data-filter="映画">映画</button>
       <button class="filter-btn" data-filter="ドラマ">ドラマ</button>
@@ -1129,1002 +347,477 @@
       <button class="filter-btn" data-filter="その他">その他</button>
     </div>
     <div class="todo-list" id="entame-list"></div>
-    <div class="todo-footer-row">
-      <span></span>
-      <button class="reset-btn" id="entame-clear">リストをクリア</button>
-    </div>
+    <div class="todo-footer-row"><span></span><button class="reset-btn" id="entame-clear">リストをクリア</button></div>
   </section>
 
-  <p class="install-note">スマホのChromeで開いて、右上のメニューから「ホーム画面に追加」を選ぶとアプリのように開けます</p>
-
-  <div class="backup-block">
-    <div class="backup-buttons">
-      <button class="reset-btn" id="exportBtn">データを書き出す</button>
-      <button class="reset-btn" id="importBtn">データを読み込む</button>
-    </div>
-    <textarea id="backupArea" placeholder="ここに貼り付けて「データを読み込む」をもう一度押してください"></textarea>
-    <p class="save-note" id="backupStatus"></p>
-  </div>
+  <p class="install-note">スマホのChromeで「ホーム画面に追加」するとアプリのように開けます</p>
 </div>
 
 <div class="toast" id="toast">ビンゴ!</div>
 
 <script>
-  // ---- ビンゴ ----
-  const BINGO_SIZE_KEY = 'bingo-size';
-  const BINGO_DATA_KEY = (n) => `board-state-${n}x${n}`;
+// ---- PWA ----
+(function(){
+  const iconSvg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" rx="36" fill="#2C3C63"/><circle cx="100" cy="100" r="58" fill="none" stroke="#B5392C" stroke-width="10"/><text x="100" y="120" font-family="serif" font-size="56" fill="#B5392C" text-anchor="middle" font-weight="700">印</text></svg>';
+  const iconUri='data:image/svg+xml,'+encodeURIComponent(iconSvg);
+  document.getElementById('appleIcon').href=iconUri;
+  const manifest={name:'やることノート',short_name:'ノート',start_url:'.',display:'standalone',background_color:'#F7F2E7',theme_color:'#2C3C63',icons:[{src:iconUri,sizes:'200x200',type:'image/svg+xml'}]};
+  document.getElementById('manifestLink').href='data:application/manifest+json,'+encodeURIComponent(JSON.stringify(manifest));
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+})();
 
-  let gridSize = 3;
-  let cellsData = [];
-  let lastAchieved = 0;
+// ---- Firebase ----
+const firebaseConfig={
+  apiKey:"AIzaSyDMsXptQ0v_qCFpz0UqFEoeVsCfdJFvvXA",
+  authDomain:"todo-bingo-e734d.firebaseapp.com",
+  projectId:"todo-bingo-e734d",
+  storageBucket:"todo-bingo-e734d.firebasestorage.app",
+  messagingSenderId:"643215171914",
+  appId:"1:643215171914:web:f717466c189af87277a1b3",
+  measurementId:"G-RHZHR96BER"
+};
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth();
+const db=firebase.firestore();
 
-  const board = document.getElementById('board');
-  const bingoCountEl = document.getElementById('bingoCount');
-  const toast = document.getElementById('toast');
-  const linesSvg = document.getElementById('linesSvg');
-  const saveStatus = document.getElementById('saveStatus');
+// ---- App state ----
+let currentUser=null;
+let appData={
+  bingo:{boards:[]},
+  daily:{items:[]},weekly:{items:[]},monthly:{items:[]},yearly:{items:[]},
+  numbered:{items:[]},someday:{items:[]},deadline:{items:[]},
+  waiting:{items:[]},entame:{items:[]},
+  settings:{activeTab:'bingo'}
+};
 
-  function buildLines(n){
-    const lines = [];
-    for(let r=0;r<n;r++){
-      const row=[];
-      for(let c=0;c<n;c++) row.push(r*n+c);
-      lines.push(row);
-    }
-    for(let c=0;c<n;c++){
-      const col=[];
-      for(let r=0;r<n;r++) col.push(r*n+c);
-      lines.push(col);
-    }
-    const d1=[],d2=[];
-    for(let i=0;i<n;i++){ d1.push(i*n+i); d2.push(i*n+(n-1-i)); }
-    lines.push(d1,d2);
-    return lines;
+// ---- Save ----
+const saveStatusEl=document.getElementById('saveStatus');
+let saveTimers={};
+function flashSave(text){
+  if(!saveStatusEl)return;
+  saveStatusEl.textContent=text;
+  clearTimeout(flashSave._t);
+  flashSave._t=setTimeout(()=>{saveStatusEl.textContent='';},2000);
+}
+function scheduleSave(key){
+  if(!currentUser)return;
+  clearTimeout(saveTimers[key]);
+  flashSave('保存中...');
+  saveTimers[key]=setTimeout(async()=>{
+    try{
+      await db.collection('users').doc(currentUser.uid).collection('appdata').doc(key).set(appData[key]);
+      flashSave('保存しました');
+    }catch(e){ flashSave('保存できませんでした'); }
+  },1500);
+}
+
+// ---- Auth ----
+document.getElementById('google-login-btn').addEventListener('click',()=>{
+  const provider=new firebase.auth.GoogleAuthProvider();
+  auth.signInWithRedirect(provider).catch(e=>{ alert('ログインに失敗しました: '+e.message); });
+});
+document.getElementById('logout-btn').addEventListener('click',()=>{ auth.signOut(); });
+
+auth.onAuthStateChanged(async(user)=>{
+  if(user){
+    currentUser=user;
+    document.getElementById('user-name').textContent=user.displayName||user.email;
+    if(user.photoURL) document.getElementById('user-avatar').src=user.photoURL;
+    await loadAllData();
+    showApp();
+  } else {
+    currentUser=null;
+    showLogin();
   }
+});
 
-  function buildSvgLines(n){
-    linesSvg.innerHTML='';
-    const lines=buildLines(n);
-    const step=100/n;
-    const centers=Array.from({length:n},(_,i)=>step*(i+0.5));
+async function loadAllData(){
+  try{
+    const snapshot=await db.collection('users').doc(currentUser.uid).collection('appdata').get();
+    snapshot.forEach(doc=>{ appData[doc.id]=doc.data(); });
+  }catch(e){ console.error('Load failed',e); }
+}
+
+function showLogin(){
+  document.getElementById('loading-screen').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('app').style.display='none';
+}
+function showApp(){
+  document.getElementById('loading-screen').style.display='none';
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  initApp();
+}
+
+// ---- Date ----
+function renderDate(){
+  const d=new Date();
+  const days=['日','月','火','水','木','金','土'];
+  document.getElementById('dateLabel').textContent=`本日 ${d.getMonth()+1}/${d.getDate()}(${days[d.getDay()]})`;
+}
+
+// ---- Effects ----
+const mainToast=document.getElementById('toast');
+function showMainToast(){
+  mainToast.classList.add('show');
+  clearTimeout(showMainToast._t);
+  showMainToast._t=setTimeout(()=>mainToast.classList.remove('show'),1600);
+}
+function spawnConfetti(){
+  const colors=['#B5392C','#2C3C63','#B0892F','#EAE2CF','#8a8070'];
+  const container=document.createElement('div');
+  container.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden';
+  document.body.appendChild(container);
+  for(let i=0;i<40;i++){
+    const piece=document.createElement('span');
+    piece.className='confetti-piece';
+    const angle=Math.random()*Math.PI*2,dist=90+Math.random()*170;
+    const tx=Math.cos(angle)*dist,ty=Math.sin(angle)*dist*0.6+100+Math.random()*120;
+    const size=5+Math.random()*6;
+    piece.style.width=size+'px';piece.style.height=(size*1.8)+'px';
+    piece.style.background=colors[Math.floor(Math.random()*colors.length)];
+    piece.style.borderRadius=Math.random()>.5?'2px':'50%';
+    piece.style.setProperty('--tx',tx+'px');piece.style.setProperty('--ty',ty+'px');
+    piece.style.setProperty('--rot',(Math.random()*720-360)+'deg');
+    piece.style.animation=`confetti-burst ${(0.9+Math.random()*0.6).toFixed(2)}s cubic-bezier(.2,.7,.4,1) forwards`;
+    container.appendChild(piece);
+  }
+  setTimeout(()=>container.remove(),1700);
+}
+function playCracker(){
+  try{
+    const Ctx=window.AudioContext||window.webkitAudioContext;
+    const ctx=new Ctx();if(ctx.state==='suspended')ctx.resume();
+    const now=ctx.currentTime;
+    const buf=ctx.createBuffer(1,Math.floor(ctx.sampleRate*.25),ctx.sampleRate);
+    const d=buf.getChannelData(0);
+    for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2);
+    const n=ctx.createBufferSource();n.buffer=buf;
+    const f=ctx.createBiquadFilter();f.type='highpass';f.frequency.value=700;
+    const g=ctx.createGain();g.gain.setValueAtTime(.55,now);g.gain.exponentialRampToValueAtTime(.001,now+.25);
+    n.connect(f).connect(g).connect(ctx.destination);n.start(now);
+    [880,1320,1760].forEach((freq,idx)=>{
+      const o=ctx.createOscillator();o.type='sine';o.frequency.value=freq;
+      const og=ctx.createGain();const t0=now+.05+idx*.07;
+      og.gain.setValueAtTime(.0001,t0);og.gain.exponentialRampToValueAtTime(.16,t0+.02);og.gain.exponentialRampToValueAtTime(.0001,t0+.18);
+      o.connect(og).connect(ctx.destination);o.start(t0);o.stop(t0+.2);
+    });
+    setTimeout(()=>ctx.close(),800);
+  }catch(e){}
+}
+function celebrate(toastEl){
+  if(toastEl){toastEl.classList.add('show');clearTimeout(celebrate._t);celebrate._t=setTimeout(()=>toastEl.classList.remove('show'),1600);}
+  else showMainToast();
+  spawnConfetti();playCracker();
+}
+
+// ---- Bingo ----
+function buildLines(n){
+  const lines=[];
+  for(let r=0;r<n;r++){const row=[];for(let c=0;c<n;c++)row.push(r*n+c);lines.push(row);}
+  for(let c=0;c<n;c++){const col=[];for(let r=0;r<n;r++)col.push(r*n+c);lines.push(col);}
+  const d1=[],d2=[];for(let i=0;i<n;i++){d1.push(i*n+i);d2.push(i*n+(n-1-i));}lines.push(d1,d2);
+  return lines;
+}
+function buildSvgLines(svg,n){
+  svg.innerHTML='';
+  const lines=buildLines(n);const step=100/n;
+  const centers=Array.from({length:n},(_,i)=>step*(i+.5));
+  lines.forEach((combo,i)=>{
+    const a=combo[0],z=combo[combo.length-1];
+    const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d',`M ${centers[a%n]} ${centers[Math.floor(a/n)]} L ${centers[z%n]} ${centers[Math.floor(z/n)]}`);
+    path.dataset.lineIndex=i;svg.appendChild(path);
+  });
+  Array.from(svg.querySelectorAll('path')).forEach(p=>{const len=p.getTotalLength();p.style.strokeDasharray=len;p.style.strokeDashoffset=len;});
+}
+function fontFs(n){return n<=3?'13px':n===4?'11px':'9px';}
+function stampSz(n){return n<=3?46:n===4?34:26;}
+
+function createBoardCard(boardData){
+  const card=document.createElement('div');
+  card.className='bingo-board-card';card.dataset.id=boardData.id;
+  const header=document.createElement('div');header.className='board-card-header';
+  const titleEl=document.createElement('div');titleEl.className='board-card-title';
+  titleEl.contentEditable='true';titleEl.textContent=boardData.title;
+  titleEl.addEventListener('blur',()=>{boardData.title=titleEl.textContent.trim()||'ボード';scheduleSave('bingo');});
+  titleEl.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();titleEl.blur();}});
+  header.appendChild(titleEl);
+  const badge=document.createElement('div');badge.className='bingo-badge';
+  badge.innerHTML='ビンゴ <span class="count">0</span>';header.appendChild(badge);
+  card.appendChild(header);
+  const sizeSw=document.createElement('div');sizeSw.className='size-switcher';
+  [3,4,5].forEach(n=>{
+    const btn=document.createElement('button');btn.className='size-btn'+(boardData.size===n?' active':'');
+    btn.textContent=`${n}×${n}`;
+    btn.addEventListener('click',()=>{
+      if(boardData.size===n)return;
+      boardData.size=n;boardData.cells=Array.from({length:n*n},()=>({text:'',done:false}));
+      sizeSw.querySelectorAll('.size-btn').forEach(b=>b.classList.toggle('active',parseInt(b.textContent)===n));
+      buildSvgLines(svgEl,n);rerenderBoard();scheduleSave('bingo');
+    });
+    sizeSw.appendChild(btn);
+  });
+  card.appendChild(sizeSw);
+  const boardWrap=document.createElement('div');boardWrap.className='board-wrap';
+  const boardEl=document.createElement('div');boardEl.className='board';
+  const svgEl=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svgEl.setAttribute('class','lines-overlay');svgEl.setAttribute('viewBox','0 0 100 100');svgEl.setAttribute('preserveAspectRatio','none');
+  boardWrap.appendChild(boardEl);boardWrap.appendChild(svgEl);card.appendChild(boardWrap);
+  const toastEl=document.createElement('div');toastEl.className='toast';toastEl.textContent='ビンゴ!';card.appendChild(toastEl);
+  const footer=document.createElement('div');footer.className='board-card-footer';
+  let rp=false,rt=null;
+  const resetBtn=document.createElement('button');resetBtn.className='reset-btn';resetBtn.textContent='盤面をリセット';
+  resetBtn.addEventListener('click',()=>{
+    if(!rp){rp=true;resetBtn.textContent='もう一度タップで確定';resetBtn.style.color='var(--vermillion)';
+      rt=setTimeout(()=>{rp=false;resetBtn.textContent='盤面をリセット';resetBtn.style.color='';},3000);
+    }else{clearTimeout(rt);rp=false;resetBtn.textContent='盤面をリセット';resetBtn.style.color='';
+      boardData.cells=Array.from({length:boardData.size*boardData.size},()=>({text:'',done:false}));rerenderBoard();scheduleSave('bingo');}
+  });
+  footer.appendChild(resetBtn);
+  let dp=false,dt=null;
+  const delBtn=document.createElement('button');delBtn.className='delete-board-btn';delBtn.textContent='削除';
+  delBtn.addEventListener('click',()=>{
+    if(!dp){dp=true;delBtn.textContent='もう一度で削除';delBtn.style.color='var(--vermillion)';
+      dt=setTimeout(()=>{dp=false;delBtn.textContent='削除';delBtn.style.color='';},3000);
+    }else{clearTimeout(dt);appData.bingo.boards=appData.bingo.boards.filter(b=>b.id!==boardData.id);card.remove();scheduleSave('bingo');}
+  });
+  footer.appendChild(delBtn);card.appendChild(footer);
+  let lastAchieved=0;
+  function checkLines(){
+    const lines=buildLines(boardData.size);let count=0;
     lines.forEach((combo,i)=>{
-      const a=combo[0],z=combo[combo.length-1];
-      const r0=Math.floor(a/n),c0=a%n;
-      const r2=Math.floor(z/n),c2=z%n;
-      const path=document.createElementNS('http://www.w3.org/2000/svg','path');
-      path.setAttribute('d',`M ${centers[c0]} ${centers[r0]} L ${centers[c2]} ${centers[r2]}`);
-      path.dataset.lineIndex=i;
-      linesSvg.appendChild(path);
+      const allDone=combo.every(idx=>boardData.cells[idx].done);
+      const path=svgEl.querySelector(`path[data-line-index="${i}"]`);if(!path)return;
+      if(allDone){count++;if(!path.classList.contains('achieved')){path.classList.add('achieved');path.style.strokeDashoffset=0;}}
+      else{if(path.classList.contains('achieved')){path.classList.remove('achieved');path.style.strokeDashoffset=path.getTotalLength();}}
     });
-    Array.from(linesSvg.querySelectorAll('path')).forEach(p=>{
-      const len=p.getTotalLength();
-      p.style.strokeDasharray=len;
-      p.style.strokeDashoffset=len;
-    });
+    badge.querySelector('.count').textContent=count;
+    if(count>lastAchieved)celebrate(toastEl);lastAchieved=count;
   }
-
-  function renderDate(){
-    const d=new Date();
-    const days=['日','月','火','水','木','金','土'];
-    document.getElementById('dateLabel').textContent=
-      `本日 ${d.getMonth()+1}/${d.getDate()}(${days[d.getDay()]})`;
-  }
-  renderDate();
-
-  function showToast(){
-    toast.classList.add('show');
-    clearTimeout(showToast._t);
-    showToast._t=setTimeout(()=>toast.classList.remove('show'),1600);
-  }
-
-  function spawnConfetti(){
-    const colors=['#B5392C','#2C3C63','#B0892F','#EAE2CF','#8a8070'];
-    const container=document.createElement('div');
-    container.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden';
-    document.body.appendChild(container);
-    for(let i=0;i<40;i++){
-      const piece=document.createElement('span');
-      piece.className='confetti-piece';
-      const angle=Math.random()*Math.PI*2;
-      const distance=90+Math.random()*170;
-      const tx=Math.cos(angle)*distance;
-      const ty=Math.sin(angle)*distance*0.6+100+Math.random()*120;
-      const rot=(Math.random()*720-360)+'deg';
-      const size=5+Math.random()*6;
-      piece.style.width=size+'px';
-      piece.style.height=(size*1.8)+'px';
-      piece.style.background=colors[Math.floor(Math.random()*colors.length)];
-      piece.style.borderRadius=Math.random()>0.5?'2px':'50%';
-      piece.style.setProperty('--tx',tx+'px');
-      piece.style.setProperty('--ty',ty+'px');
-      piece.style.setProperty('--rot',rot);
-      const dur=(0.9+Math.random()*0.6).toFixed(2);
-      piece.style.animation=`confetti-burst ${dur}s cubic-bezier(.2,.7,.4,1) forwards`;
-      container.appendChild(piece);
-    }
-    setTimeout(()=>container.remove(),1700);
-  }
-
-  function playCrackerSound(){
-    try{
-      const Ctx=window.AudioContext||window.webkitAudioContext;
-      const ctx=new Ctx();
-      if(ctx.state==='suspended') ctx.resume();
-      const now=ctx.currentTime;
-      const bufferSize=Math.floor(ctx.sampleRate*0.25);
-      const buffer=ctx.createBuffer(1,bufferSize,ctx.sampleRate);
-      const data=buffer.getChannelData(0);
-      for(let i=0;i<bufferSize;i++) data[i]=(Math.random()*2-1)*Math.pow(1-i/bufferSize,2);
-      const noise=ctx.createBufferSource();
-      noise.buffer=buffer;
-      const noiseFilter=ctx.createBiquadFilter();
-      noiseFilter.type='highpass';
-      noiseFilter.frequency.value=700;
-      const noiseGain=ctx.createGain();
-      noiseGain.gain.setValueAtTime(0.55,now);
-      noiseGain.gain.exponentialRampToValueAtTime(0.001,now+0.25);
-      noise.connect(noiseFilter).connect(noiseGain).connect(ctx.destination);
-      noise.start(now);
-      [880,1320,1760].forEach((freq,idx)=>{
-        const osc=ctx.createOscillator();
-        osc.type='sine';
-        osc.frequency.value=freq;
-        const g=ctx.createGain();
-        const t0=now+0.05+idx*0.07;
-        g.gain.setValueAtTime(0.0001,t0);
-        g.gain.exponentialRampToValueAtTime(0.16,t0+0.02);
-        g.gain.exponentialRampToValueAtTime(0.0001,t0+0.18);
-        osc.connect(g).connect(ctx.destination);
-        osc.start(t0);
-        osc.stop(t0+0.2);
-      });
-      setTimeout(()=>ctx.close(),800);
-    }catch(err){}
-  }
-
-  function celebrate(){
-    showToast();
-    spawnConfetti();
-    playCrackerSound();
-  }
-
-  function flashSaveStatus(text){
-    if(!saveStatus) return;
-    saveStatus.textContent=text;
-    clearTimeout(flashSaveStatus._t);
-    flashSaveStatus._t=setTimeout(()=>{saveStatus.textContent='';},1400);
-  }
-
-  function loadState(n){
-    cellsData=Array.from({length:n*n},()=>({text:'',done:false}));
-    try{
-      const raw=localStorage.getItem(BINGO_DATA_KEY(n));
-      if(raw){
-        const parsed=JSON.parse(raw);
-        if(Array.isArray(parsed)&&parsed.length===n*n){
-          parsed.forEach((d,i)=>{cellsData[i].text=d.text||'';cellsData[i].done=!!d.done;});
-        }
-      }
-    }catch(err){}
-    rerenderAll({skipToast:true,skipSave:true});
-  }
-
-  function saveState(){
-    try{
-      localStorage.setItem(BINGO_DATA_KEY(gridSize),JSON.stringify(cellsData));
-      flashSaveStatus('保存しました');
-    }catch(err){
-      flashSaveStatus('保存できませんでした');
-    }
-  }
-
-  function checkLines(skipToast){
-    const lines=buildLines(gridSize);
-    let achievedCount=0;
-    lines.forEach((combo,i)=>{
-      const allDone=combo.every(idx=>cellsData[idx].done);
-      const path=linesSvg.querySelector(`path[data-line-index="${i}"]`);
-      if(!path) return;
-      if(allDone){
-        achievedCount++;
-        if(!path.classList.contains('achieved')){
-          path.classList.add('achieved');
-          path.style.strokeDashoffset=0;
-        }
-      } else {
-        if(path.classList.contains('achieved')){
-          path.classList.remove('achieved');
-          path.style.strokeDashoffset=path.getTotalLength();
-        }
-      }
-    });
-    bingoCountEl.textContent=achievedCount;
-    if(!skipToast&&achievedCount>lastAchieved) celebrate();
-    lastAchieved=achievedCount;
-  }
-
-  function fontSizeForGrid(n){ return n<=3?'13px':n===4?'11px':'9px'; }
-  function stampSizeForGrid(n){ return n<=3?46:n===4?34:26; }
-
   function renderCell(idx){
-    const n=gridSize;
-    const data=cellsData[idx];
+    const n=boardData.size,data=boardData.cells[idx];
     const el=document.createElement('div');
     el.className='cell'+(data.done?' done':'')+(!data.text&&!data.done?' empty':'');
-    el.dataset.idx=idx;
-    const fs=fontSizeForGrid(n);
-    const ss=stampSizeForGrid(n);
-
+    el.dataset.idx=idx;const fs=fontFs(n),ss=stampSz(n);
     if(!data.text&&!data.done){
       el.innerHTML=`<div class="empty-hint" style="font-size:${fs}"><span class="plus">+</span>入力</div>`;
       el.addEventListener('click',()=>startEdit(idx));
-    } else {
-      const textDiv=document.createElement('div');
-      textDiv.className='cell-text';
-      textDiv.style.fontSize=fs;
-      textDiv.textContent=data.text;
-      if(!data.done) textDiv.addEventListener('click',()=>startEdit(idx));
-      el.appendChild(textDiv);
-
+    }else{
+      const td=document.createElement('div');td.className='cell-text';td.style.fontSize=fs;td.textContent=data.text;
+      if(!data.done)td.addEventListener('click',()=>startEdit(idx));el.appendChild(td);
       if(data.done){
-        const stamp=document.createElement('div');
-        stamp.className='stamp-mark';
-        stamp.style.width=ss+'px';
-        stamp.style.height=ss+'px';
-        stamp.style.marginTop=(-ss/2)+'px';
-        stamp.style.fontSize=(ss*0.4)+'px';
-        stamp.textContent='済';
-        stamp.title='タップで取り消す';
-        stamp.addEventListener('click',(e)=>{
-          e.stopPropagation();
-          data.done=false;
-          rerenderAll();
-        });
-        el.appendChild(stamp);
-      } else {
-        const btn=document.createElement('button');
-        btn.className='stamp-btn';
-        btn.style.width=(ss*0.6)+'px';
-        btn.style.height=(ss*0.6)+'px';
-        btn.style.fontSize=(ss*0.24)+'px';
-        btn.textContent='印';
-        btn.title='完了として印を押す';
-        btn.addEventListener('click',(e)=>{
-          e.stopPropagation();
-          data.done=true;
-          rerenderAll();
-        });
-        el.appendChild(btn);
+        const stamp=document.createElement('div');stamp.className='stamp-mark';
+        stamp.style.cssText=`width:${ss}px;height:${ss}px;margin-top:${-ss/2}px;font-size:${ss*.4}px`;
+        stamp.textContent='済';stamp.addEventListener('click',e=>{e.stopPropagation();data.done=false;rerenderBoard();scheduleSave('bingo');});el.appendChild(stamp);
+      }else{
+        const btn=document.createElement('button');btn.className='stamp-btn';
+        btn.style.cssText=`width:${ss*.6}px;height:${ss*.6}px;font-size:${ss*.24}px`;
+        btn.textContent='印';btn.addEventListener('click',e=>{e.stopPropagation();data.done=true;rerenderBoard();scheduleSave('bingo');});el.appendChild(btn);
       }
     }
     return el;
   }
-
   function startEdit(idx){
-    const data=cellsData[idx];
-    const el=board.querySelector(`.cell[data-idx="${idx}"]`);
-    el.className='cell';
-    el.innerHTML='';
-    const ta=document.createElement('textarea');
-    ta.value=data.text;
-    ta.placeholder='入力…';
-    ta.maxLength=40;
-    ta.style.fontSize=fontSizeForGrid(gridSize);
-    el.appendChild(ta);
-    ta.focus();
-    ta.addEventListener('blur',()=>{
-      data.text=ta.value.trim();
-      rerenderAll();
-    });
-    ta.addEventListener('keydown',(e)=>{
-      if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); ta.blur(); }
-    });
+    const data=boardData.cells[idx];const el=boardEl.querySelector(`.cell[data-idx="${idx}"]`);
+    el.className='cell';el.innerHTML='';
+    const ta=document.createElement('textarea');ta.value=data.text;ta.placeholder='入力…';ta.maxLength=40;ta.style.fontSize=fontFs(boardData.size);
+    el.appendChild(ta);ta.focus();
+    ta.addEventListener('blur',()=>{data.text=ta.value.trim();rerenderBoard();scheduleSave('bingo');});
+    ta.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();ta.blur();}});
   }
-
-  function rerenderAll(opts){
-    opts=opts||{};
-    board.style.gridTemplateColumns=`repeat(${gridSize}, 1fr)`;
-    board.innerHTML='';
-    cellsData.forEach((_,idx)=>board.appendChild(renderCell(idx)));
-    checkLines(opts.skipToast);
-    if(!opts.skipSave) saveState();
+  function rerenderBoard(){
+    const n=boardData.size;boardEl.style.gridTemplateColumns=`repeat(${n},1fr)`;boardEl.innerHTML='';
+    boardData.cells.forEach((_,idx)=>boardEl.appendChild(renderCell(idx)));checkLines();
   }
+  buildSvgLines(svgEl,boardData.size);rerenderBoard();
+  return card;
+}
 
-  function switchGridSize(n){
-    gridSize=n;
-    lastAchieved=0;
-    document.querySelectorAll('.size-btn').forEach(btn=>{
-      btn.classList.toggle('active',parseInt(btn.dataset.size)===n);
+function newBoardData(size,num){
+  return{id:Date.now()+'-'+Math.random().toString(36).slice(2),title:'ボード'+(num||''),size:size||3,cells:Array.from({length:(size||3)*(size||3)},()=>({text:'',done:false}))};
+}
+function renderAllBoards(){
+  const container=document.getElementById('bingo-boards-container');container.innerHTML='';
+  if(!appData.bingo.boards||!appData.bingo.boards.length){appData.bingo.boards=[newBoardData(3,1)];}
+  appData.bingo.boards.forEach(b=>container.appendChild(createBoardCard(b)));
+}
+document.getElementById('add-board-btn').addEventListener('click',()=>{
+  const b=newBoardData(3,appData.bingo.boards.length+1);appData.bingo.boards.push(b);
+  const card=createBoardCard(b);document.getElementById('bingo-boards-container').appendChild(card);
+  card.scrollIntoView({behavior:'smooth',block:'start'});scheduleSave('bingo');
+});
+
+// ---- Generic todo list ----
+function createTodoList(key,listId,inputId,addBtnId,clearBtnId,countId){
+  if(!appData[key])appData[key]={items:[]};
+  if(!appData[key].items)appData[key].items=[];
+  const listEl=document.getElementById(listId);
+  const inputEl=document.getElementById(inputId);
+  const countEl=document.getElementById(countId);
+  function render(){
+    listEl.innerHTML='';const items=appData[key].items;
+    if(!items.length){const h=document.createElement('div');h.className='todo-empty-hint';h.textContent='入力欄から追加してください';listEl.appendChild(h);if(countEl)countEl.textContent='';return;}
+    items.forEach(item=>{
+      const row=document.createElement('div');row.className='todo-row'+(item.done?' done':'');
+      const sw=document.createElement('div');sw.className='todo-stamp-wrap';
+      if(item.done){const s=document.createElement('div');s.className='stamp-mark small';s.textContent='済';s.addEventListener('click',()=>{item.done=false;render();scheduleSave(key);});sw.appendChild(s);}
+      else{const b=document.createElement('button');b.className='stamp-btn small';b.textContent='印';b.addEventListener('click',()=>{item.done=true;render();scheduleSave(key);});sw.appendChild(b);}
+      row.appendChild(sw);
+      const text=document.createElement('div');text.className='todo-text';text.textContent=item.text;row.appendChild(text);
+      const del=document.createElement('button');del.className='todo-del';del.textContent='×';del.addEventListener('click',()=>{appData[key].items=appData[key].items.filter(i=>i.id!==item.id);render();scheduleSave(key);});row.appendChild(del);
+      listEl.appendChild(row);
     });
-    try{ localStorage.setItem(BINGO_SIZE_KEY,n); }catch(err){}
-    buildSvgLines(n);
-    loadState(n);
+    if(countEl){const done=items.filter(i=>i.done).length;countEl.textContent=items.length?`${done}/${items.length} 完了`:''; }
   }
+  function addItem(){
+    const text=inputEl.value.trim();if(!text)return;
+    appData[key].items.push({id:Date.now()+'-'+Math.random().toString(36).slice(2),text,done:false});
+    render();scheduleSave(key);inputEl.value='';inputEl.focus();
+  }
+  document.getElementById(addBtnId).addEventListener('click',addItem);
+  inputEl.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addItem();}});
+  (function(){let p=false,t=null;const btn=document.getElementById(clearBtnId);btn.addEventListener('click',()=>{
+    if(!p){p=true;btn.textContent='もう一度タップで確定';btn.style.color='var(--vermillion)';t=setTimeout(()=>{p=false;btn.textContent='リストをクリア';btn.style.color='';},3000);}
+    else{clearTimeout(t);p=false;btn.textContent='リストをクリア';btn.style.color='';appData[key].items=[];render();scheduleSave(key);}
+  });})();
+  render();
+}
 
-  document.querySelectorAll('.size-btn').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      const n=parseInt(btn.dataset.size);
-      if(n!==gridSize) switchGridSize(n);
+// ---- Numbered list ----
+function initNumberedList(){
+  if(!appData.numbered)appData.numbered={items:[]};
+  if(!appData.numbered.items)appData.numbered.items=[];
+  const listEl=document.getElementById('numbered-list');const inputEl=document.getElementById('numbered-input');const countEl=document.getElementById('numbered-count');
+  function render(){
+    listEl.innerHTML='';const items=appData.numbered.items;
+    if(!items.length){const h=document.createElement('div');h.className='numbered-empty-hint';h.textContent='下の入力欄からやることを追加してください';listEl.appendChild(h);countEl.textContent='';return;}
+    items.forEach((item,pos)=>{
+      const row=document.createElement('div');row.className='numbered-row'+(item.done?' done':'');
+      const num=document.createElement('span');num.className='numbered-num';num.textContent=(pos+1)+'.';row.appendChild(num);
+      const text=document.createElement('div');text.className='numbered-text';text.textContent=item.text;row.appendChild(text);
+      const db2=document.createElement('button');db2.className='numbered-done-btn';db2.title=item.done?'タップで未完了に戻す':'完了にする';db2.textContent=item.done?'済':'印';
+      db2.addEventListener('click',()=>{item.done=!item.done;render();scheduleSave('numbered');});row.appendChild(db2);
+      const del=document.createElement('button');del.className='numbered-del';del.textContent='×';del.title='削除して繰り上げる';
+      del.addEventListener('click',()=>{appData.numbered.items.splice(pos,1);render();scheduleSave('numbered');});row.appendChild(del);
+      listEl.appendChild(row);
     });
-  });
+    const done=items.filter(i=>i.done).length;countEl.textContent=items.length?`${done}/${items.length} 完了`:'';
+  }
+  function addItem(){const text=inputEl.value.trim();if(!text)return;appData.numbered.items.push({id:Date.now()+'-'+Math.random().toString(36).slice(2),text,done:false});render();scheduleSave('numbered');inputEl.value='';inputEl.focus();}
+  document.getElementById('numbered-add').addEventListener('click',addItem);
+  inputEl.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addItem();}});
+  (function(){let p=false,t=null;const btn=document.getElementById('numbered-clear');btn.addEventListener('click',()=>{
+    if(!p){p=true;btn.textContent='もう一度タップで確定';btn.style.color='var(--vermillion)';t=setTimeout(()=>{p=false;btn.textContent='リストをクリア';btn.style.color='';},3000);}
+    else{clearTimeout(t);p=false;btn.textContent='リストをクリア';btn.style.color='';appData.numbered.items=[];render();scheduleSave('numbered');}
+  });})();
+  render();
+}
 
-  (function(){
-    let resetPending = false;
-    let resetTimer = null;
-    const resetBtn = document.getElementById('resetBtn');
-    resetBtn.addEventListener('click', () => {
-      if(!resetPending){
-        resetPending = true;
-        resetBtn.textContent = '本当にリセット？（もう一度タップ）';
-        resetBtn.style.borderColor = 'var(--vermillion)';
-        resetBtn.style.color = 'var(--vermillion)';
-        resetTimer = setTimeout(() => {
-          resetPending = false;
-          resetBtn.textContent = '盤面をリセット';
-          resetBtn.style.borderColor = '';
-          resetBtn.style.color = '';
-        }, 3000);
-      } else {
-        clearTimeout(resetTimer);
-        resetPending = false;
-        resetBtn.textContent = '盤面をリセット';
-        resetBtn.style.borderColor = '';
-        resetBtn.style.color = '';
-        cellsData.forEach(d=>{d.text='';d.done=false;});
-        rerenderAll();
-      }
+// ---- Deadline list ----
+function initDeadlineList(){
+  if(!appData.deadline)appData.deadline={items:[]};
+  if(!appData.deadline.items)appData.deadline.items=[];
+  const listEl=document.getElementById('deadline-list');const inputEl=document.getElementById('deadline-input');const dateEl=document.getElementById('deadline-date');const countEl=document.getElementById('deadline-count');
+  function dateLabel(dateStr){
+    if(!dateStr)return null;const today=new Date();today.setHours(0,0,0,0);const d=new Date(dateStr+'T00:00:00');const diff=Math.round((d-today)/86400000);
+    if(diff<0)return{text:`${Math.abs(diff)}日超過`,cls:'overdue'};if(diff===0)return{text:'今日が期限',cls:'soon'};if(diff<=3)return{text:`あと${diff}日`,cls:'soon'};
+    const m=d.getMonth()+1,day=d.getDate();return{text:`${m}/${day}まで`,cls:''};
+  }
+  function render(){
+    listEl.innerHTML='';const items=appData.deadline.items;
+    const sorted=[...items].sort((a,b)=>{if(!a.date&&!b.date)return 0;if(!a.date)return 1;if(!b.date)return -1;return a.date.localeCompare(b.date);});
+    if(!sorted.length){const h=document.createElement('div');h.className='todo-empty-hint';h.textContent='入力欄から追加してください';listEl.appendChild(h);countEl.textContent='';return;}
+    sorted.forEach(item=>{
+      const row=document.createElement('div');row.className='todo-row'+(item.done?' done':'');
+      const sw=document.createElement('div');sw.className='todo-stamp-wrap';
+      if(item.done){const s=document.createElement('div');s.className='stamp-mark small';s.textContent='済';s.addEventListener('click',()=>{item.done=false;render();scheduleSave('deadline');});sw.appendChild(s);}
+      else{const b=document.createElement('button');b.className='stamp-btn small';b.textContent='印';b.addEventListener('click',()=>{item.done=true;render();scheduleSave('deadline');});sw.appendChild(b);}
+      row.appendChild(sw);
+      const tw=document.createElement('div');tw.className='todo-text-wrap';
+      const text=document.createElement('div');text.className='todo-text';text.textContent=item.text;tw.appendChild(text);
+      if(item.date&&!item.done){const info=dateLabel(item.date);if(info){const chip=document.createElement('span');chip.className='deadline-chip'+(info.cls?' '+info.cls:'');chip.textContent=info.text;tw.appendChild(chip);}}
+      row.appendChild(tw);
+      const del=document.createElement('button');del.className='todo-del';del.textContent='×';del.addEventListener('click',()=>{appData.deadline.items=appData.deadline.items.filter(i=>i.id!==item.id);render();scheduleSave('deadline');});row.appendChild(del);
+      listEl.appendChild(row);
     });
-  })();
+    const done=items.filter(i=>i.done).length;countEl.textContent=items.length?`${done}/${items.length} 完了`:'';
+  }
+  function addItem(){const text=inputEl.value.trim();if(!text)return;appData.deadline.items.push({id:Date.now()+'-'+Math.random().toString(36).slice(2),text,date:dateEl.value||'',done:false});render();scheduleSave('deadline');inputEl.value='';dateEl.value='';inputEl.focus();}
+  document.getElementById('deadline-add').addEventListener('click',addItem);
+  inputEl.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addItem();}});
+  (function(){let p=false,t=null;const btn=document.getElementById('deadline-clear');btn.addEventListener('click',()=>{
+    if(!p){p=true;btn.textContent='もう一度タップで確定';btn.style.color='var(--vermillion)';t=setTimeout(()=>{p=false;btn.textContent='リストをクリア';btn.style.color='';},3000);}
+    else{clearTimeout(t);p=false;btn.textContent='リストをクリア';btn.style.color='';appData.deadline.items=[];render();scheduleSave('deadline');}
+  });})();
+  render();
+}
 
-  (function initBingo(){
-    let n=3;
-    try{
-      const saved=parseInt(localStorage.getItem(BINGO_SIZE_KEY));
-      if([3,4,5].includes(saved)) n=saved;
-    }catch(err){}
-    switchGridSize(n);
-  })();
+// ---- Entame list ----
+function initEntameList(){
+  if(!appData.entame)appData.entame={items:[]};
+  if(!appData.entame.items)appData.entame.items=[];
+  let selectedCat='映画',selectedFilter='all';
+  const listEl=document.getElementById('entame-list');const inputEl=document.getElementById('entame-input');const countEl=document.getElementById('entame-count');
+  function render(){
+    listEl.innerHTML='';const items=appData.entame.items;
+    const visible=selectedFilter==='all'?items:items.filter(i=>i.cat===selectedFilter);
+    if(!visible.length){const h=document.createElement('div');h.className='todo-empty-hint';h.textContent=items.length?'このカテゴリにはまだ何もありません':'カテゴリを選んでタイトルを追加してください';listEl.appendChild(h);}
+    visible.forEach(item=>{
+      const row=document.createElement('div');row.className='todo-row'+(item.done?' done':'');
+      const sw=document.createElement('div');sw.className='todo-stamp-wrap';
+      if(item.done){const s=document.createElement('div');s.className='stamp-mark small';s.textContent='済';s.addEventListener('click',()=>{item.done=false;render();scheduleSave('entame');});sw.appendChild(s);}
+      else{const b=document.createElement('button');b.className='stamp-btn small';b.textContent='印';b.addEventListener('click',()=>{item.done=true;render();scheduleSave('entame');});sw.appendChild(b);}
+      row.appendChild(sw);
+      const tag=document.createElement('span');tag.className=`entame-cat-tag cat-tag-${item.cat}`;tag.textContent=item.cat;row.appendChild(tag);
+      const text=document.createElement('div');text.className='todo-text';text.textContent=item.text;row.appendChild(text);
+      const del=document.createElement('button');del.className='todo-del';del.textContent='×';del.addEventListener('click',()=>{appData.entame.items=appData.entame.items.filter(i=>i.id!==item.id);render();scheduleSave('entame');});row.appendChild(del);
+      listEl.appendChild(row);
+    });
+    const done=items.filter(i=>i.done).length;countEl.textContent=items.length?`${done}/${items.length} 完了`:'';
+  }
+  document.querySelectorAll('.cat-btn').forEach(btn=>{btn.addEventListener('click',()=>{selectedCat=btn.dataset.cat;document.querySelectorAll('.cat-btn').forEach(b=>b.classList.toggle('active',b.dataset.cat===selectedCat));inputEl.focus();});});
+  document.querySelectorAll('.filter-btn').forEach(btn=>{btn.addEventListener('click',()=>{selectedFilter=btn.dataset.filter;document.querySelectorAll('.filter-btn').forEach(b=>b.classList.toggle('active',b.dataset.filter===selectedFilter));render();});});
+  function addItem(){const text=inputEl.value.trim();if(!text)return;appData.entame.items.push({id:Date.now()+'-'+Math.random().toString(36).slice(2),text,cat:selectedCat,done:false});render();scheduleSave('entame');inputEl.value='';inputEl.focus();}
+  document.getElementById('entame-add').addEventListener('click',addItem);
+  inputEl.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addItem();}});
+  (function(){let p=false,t=null;const btn=document.getElementById('entame-clear');btn.addEventListener('click',()=>{
+    if(!p){p=true;btn.textContent='もう一度タップで確定';btn.style.color='var(--vermillion)';t=setTimeout(()=>{p=false;btn.textContent='リストをクリア';btn.style.color='';},3000);}
+    else{clearTimeout(t);p=false;btn.textContent='リストをクリア';btn.style.color='';appData.entame.items=[];render();scheduleSave('entame');}
+  });})();
+  render();
+}
 
-
-  // ---- タブ切り替え ----
-  const TAB_KEY = 'active-tab';
-  const tabButtons = Array.from(document.querySelectorAll('.tab-btn'));
-  const tabPanels = Array.from(document.querySelectorAll('.tab-panel'));
-
+// ---- Tabs ----
+function initTabs(){
+  const btns=Array.from(document.querySelectorAll('.tab-btn'));
+  const panels=Array.from(document.querySelectorAll('.tab-panel'));
   function switchTab(name){
-    tabButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === name));
-    tabPanels.forEach(panel => panel.classList.toggle('active', panel.id === `panel-${name}`));
-    try{ localStorage.setItem(TAB_KEY, name); }catch(err){}
+    btns.forEach(b=>b.classList.toggle('active',b.dataset.tab===name));
+    panels.forEach(p=>p.classList.toggle('active',p.id==='panel-'+name));
+    if(!appData.settings)appData.settings={};appData.settings.activeTab=name;scheduleSave('settings');
   }
-
-  tabButtons.forEach(btn => {
-    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
-  });
-
-  (function restoreTab(){
-    try{
-      const saved = localStorage.getItem(TAB_KEY);
-      if(saved && tabButtons.some(btn => btn.dataset.tab === saved)){
-        switchTab(saved);
-      }
-    }catch(err){}
-  })();
-
-  // ---- Daily / Weekly / Monthly / Yearly の共通ToDoリスト ----
-  function createTodoList(key, listId, inputId, addBtnId, clearBtnId, countId){
-    let items = [];
-    const listEl = document.getElementById(listId);
-    const countEl = document.getElementById(countId);
-    const inputEl = document.getElementById(inputId);
-
-    function load(){
-      try{
-        const raw = localStorage.getItem(key);
-        if(raw){
-          const parsed = JSON.parse(raw);
-          if(Array.isArray(parsed)) items = parsed;
-        }
-      }catch(err){}
-      render();
-    }
-
-    function save(){
-      try{ localStorage.setItem(key, JSON.stringify(items)); }catch(err){}
-    }
-
-    function render(){
-      listEl.innerHTML = '';
-      if(items.length === 0){
-        const hint = document.createElement('div');
-        hint.className = 'todo-empty-hint';
-        hint.textContent = '入力欄から追加してください';
-        listEl.appendChild(hint);
-      }
-      items.forEach(item => {
-        const row = document.createElement('div');
-        row.className = 'todo-row' + (item.done ? ' done' : '');
-
-        const stampWrap = document.createElement('div');
-        stampWrap.className = 'todo-stamp-wrap';
-        if(item.done){
-          const stamp = document.createElement('div');
-          stamp.className = 'stamp-mark small';
-          stamp.textContent = '済';
-          stamp.title = 'タップで取り消す';
-          stamp.addEventListener('click', () => {
-            item.done = false;
-            save(); render();
-          });
-          stampWrap.appendChild(stamp);
-        } else {
-          const btn = document.createElement('button');
-          btn.className = 'stamp-btn small';
-          btn.textContent = '印';
-          btn.title = '完了として印を押す';
-          btn.addEventListener('click', () => {
-            item.done = true;
-            save(); render();
-            if(items.length > 0 && items.every(i => i.done)) celebrate();
-          });
-          stampWrap.appendChild(btn);
-        }
-        row.appendChild(stampWrap);
-
-        const text = document.createElement('div');
-        text.className = 'todo-text';
-        text.textContent = item.text;
-        row.appendChild(text);
-
-        const del = document.createElement('button');
-        del.className = 'todo-del';
-        del.textContent = '×';
-        del.title = '削除';
-        del.addEventListener('click', () => {
-          items = items.filter(i => i.id !== item.id);
-          save(); render();
-        });
-        row.appendChild(del);
-
-        listEl.appendChild(row);
-      });
-
-      const doneCount = items.filter(i => i.done).length;
-      countEl.textContent = items.length ? `${doneCount}/${items.length} 完了` : '';
-    }
-
-    function addItem(){
-      const text = inputEl.value.trim();
-      if(!text) return;
-      items.push({ id: Date.now() + '-' + Math.random().toString(36).slice(2), text, done:false });
-      save(); render();
-      inputEl.value = '';
-      inputEl.focus();
-    }
-
-    document.getElementById(addBtnId).addEventListener('click', addItem);
-    inputEl.addEventListener('keydown', (e) => {
-      if(e.key === 'Enter'){
-        e.preventDefault();
-        addItem();
-      }
-    });
-
-    (function(){
-      let pending = false, timer = null;
-      const btn = document.getElementById(clearBtnId);
-      btn.addEventListener('click', () => {
-        if(!pending){
-          pending = true;
-          btn.textContent = 'もう一度タップで確定';
-          btn.style.color = 'var(--vermillion)';
-          timer = setTimeout(() => {
-            pending = false;
-            btn.textContent = 'リストをクリア';
-            btn.style.color = '';
-          }, 3000);
-        } else {
-          clearTimeout(timer);
-          pending = false;
-          btn.textContent = 'リストをクリア';
-          btn.style.color = '';
-          items = [];
-          save(); render();
-        }
-      });
-    })();
-
-    load();
-  }
-
-  createTodoList('daily-list-data', 'daily-list', 'daily-input', 'daily-add', 'daily-clear', 'daily-count');
-  createTodoList('weekly-list-data', 'weekly-list', 'weekly-input', 'weekly-add', 'weekly-clear', 'weekly-count');
-  createTodoList('monthly-list-data', 'monthly-list', 'monthly-input', 'monthly-add', 'monthly-clear', 'monthly-count');
-  createTodoList('yearly-list-data', 'yearly-list', 'yearly-input', 'yearly-add', 'yearly-clear', 'yearly-count');
-  // ---- 番号付きリスト ----
-  (function(){
-    const STORAGE_KEY = 'numbered-list-data';
-    let items = [];
-
-    const listEl = document.getElementById('numbered-list');
-    const inputEl = document.getElementById('numbered-input');
-    const countEl = document.getElementById('numbered-count');
-
-    function load(){
-      try{
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if(raw){
-          const parsed = JSON.parse(raw);
-          if(Array.isArray(parsed)) items = parsed;
-        }
-      }catch(err){}
-      render();
-    }
-
-    function save(){
-      try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); }catch(err){}
-    }
-
-    function render(){
-      listEl.innerHTML = '';
-      if(items.length === 0){
-        const hint = document.createElement('div');
-        hint.className = 'numbered-empty-hint';
-        hint.textContent = '下の入力欄からやることを追加してください';
-        listEl.appendChild(hint);
-        countEl.textContent = '';
-        return;
-      }
-
-      // 番号は配列の順番で自動的に1, 2, 3...
-      items.forEach((item, pos) => {
-        const row = document.createElement('div');
-        row.className = 'numbered-row' + (item.done ? ' done' : '');
-
-        const num = document.createElement('span');
-        num.className = 'numbered-num';
-        num.textContent = (pos + 1) + '.';
-        row.appendChild(num);
-
-        const text = document.createElement('div');
-        text.className = 'numbered-text';
-        text.textContent = item.text;
-        row.appendChild(text);
-
-        const doneBtn = document.createElement('button');
-        doneBtn.className = 'numbered-done-btn';
-        doneBtn.title = item.done ? 'タップで未完了に戻す' : '完了にする';
-        doneBtn.textContent = item.done ? '済' : '印';
-        doneBtn.addEventListener('click', () => {
-          item.done = !item.done;
-          save(); render();
-        });
-        row.appendChild(doneBtn);
-
-        const del = document.createElement('button');
-        del.className = 'numbered-del';
-        del.textContent = '×';
-        del.title = '削除して繰り上げる';
-        del.addEventListener('click', () => {
-          items.splice(pos, 1);   // 削除すると後ろが自動で繰り上がる
-          save(); render();
-        });
-        row.appendChild(del);
-
-        listEl.appendChild(row);
-      });
-
-      const doneCount = items.filter(i => i.done).length;
-      countEl.textContent = `${doneCount}/${items.length} 完了`;
-    }
-
-    function addItem(){
-      const text = inputEl.value.trim();
-      if(!text) return;
-      items.push({ id: Date.now() + '-' + Math.random().toString(36).slice(2), text, done: false });
-      save(); render();
-      inputEl.value = '';
-      inputEl.focus();
-    }
-
-    document.getElementById('numbered-add').addEventListener('click', addItem);
-    inputEl.addEventListener('keydown', (e) => {
-      if(e.key === 'Enter'){ e.preventDefault(); addItem(); }
-    });
-
-    (function(){
-      let pending = false, timer = null;
-      const btn = document.getElementById('numbered-clear');
-      btn.addEventListener('click', () => {
-        if(!pending){
-          pending = true;
-          btn.textContent = 'もう一度タップで確定';
-          btn.style.color = 'var(--vermillion)';
-          timer = setTimeout(() => {
-            pending = false;
-            btn.textContent = 'リストをクリア';
-            btn.style.color = '';
-          }, 3000);
-        } else {
-          clearTimeout(timer);
-          pending = false;
-          btn.textContent = 'リストをクリア';
-          btn.style.color = '';
-          items = [];
-          save(); render();
-        }
-      });
-    })();
-
-    load();
-  })();
-
-
-  // ---- いつかやること ----
-  createTodoList('someday-list-data','someday-list','someday-input','someday-add','someday-clear','someday-count');
-
-  // ---- 時がきたらやること ----
-  createTodoList('waiting-list-data','waiting-list','waiting-input','waiting-add','waiting-clear','waiting-count');
-
-  // ---- 期限付きのこと ----
-  (function(){
-    const STORAGE_KEY = 'deadline-list-data';
-    let items = [];
-    const listEl  = document.getElementById('deadline-list');
-    const inputEl = document.getElementById('deadline-input');
-    const dateEl  = document.getElementById('deadline-date');
-    const countEl = document.getElementById('deadline-count');
-
-    function load(){
-      try{
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if(raw){
-          const parsed = JSON.parse(raw);
-          if(Array.isArray(parsed)) items = parsed;
-        }
-      }catch(err){}
-      render();
-    }
-
-    function save(){
-      try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); }catch(err){}
-    }
-
-    function dateLabel(dateStr){
-      if(!dateStr) return '';
-      const today = new Date(); today.setHours(0,0,0,0);
-      const d = new Date(dateStr + 'T00:00:00');
-      const diff = Math.round((d - today) / 86400000);
-      if(diff < 0)  return { text: `${Math.abs(diff)}日超過`, cls: 'overdue' };
-      if(diff === 0) return { text: '今日が期限', cls: 'soon' };
-      if(diff <= 3)  return { text: `あと${diff}日`, cls: 'soon' };
-      const m = d.getMonth()+1, day = d.getDate();
-      return { text: `${m}/${day}まで`, cls: '' };
-    }
-
-    function render(){
-      listEl.innerHTML = '';
-      // 期限あり→日付昇順、期限なし→末尾
-      const sorted = [...items].sort((a,b)=>{
-        if(!a.date && !b.date) return 0;
-        if(!a.date) return 1;
-        if(!b.date) return -1;
-        return a.date.localeCompare(b.date);
-      });
-
-      if(sorted.length === 0){
-        const hint = document.createElement('div');
-        hint.className = 'todo-empty-hint';
-        hint.textContent = '入力欄から追加してください';
-        listEl.appendChild(hint);
-        countEl.textContent = '';
-        return;
-      }
-
-      sorted.forEach(item => {
-        const row = document.createElement('div');
-        row.className = 'todo-row' + (item.done ? ' done' : '');
-
-        const stampWrap = document.createElement('div');
-        stampWrap.className = 'todo-stamp-wrap';
-        if(item.done){
-          const stamp = document.createElement('div');
-          stamp.className = 'stamp-mark small';
-          stamp.textContent = '済';
-          stamp.addEventListener('click', () => { item.done=false; save(); render(); });
-          stampWrap.appendChild(stamp);
-        } else {
-          const btn = document.createElement('button');
-          btn.className = 'stamp-btn small';
-          btn.textContent = '印';
-          btn.addEventListener('click', () => { item.done=true; save(); render(); });
-          stampWrap.appendChild(btn);
-        }
-        row.appendChild(stampWrap);
-
-        const textWrap = document.createElement('div');
-        textWrap.className = 'todo-text-wrap';
-
-        const text = document.createElement('div');
-        text.className = 'todo-text';
-        text.textContent = item.text;
-        textWrap.appendChild(text);
-
-        if(item.date && !item.done){
-          const info = dateLabel(item.date);
-          const chip = document.createElement('span');
-          chip.className = 'deadline-chip' + (info.cls ? ' '+info.cls : '');
-          chip.textContent = info.text;
-          textWrap.appendChild(chip);
-        }
-        row.appendChild(textWrap);
-
-        const del = document.createElement('button');
-        del.className = 'todo-del';
-        del.textContent = '×';
-        del.addEventListener('click', () => {
-          items = items.filter(i => i.id !== item.id);
-          save(); render();
-        });
-        row.appendChild(del);
-
-        listEl.appendChild(row);
-      });
-
-      const doneCount = items.filter(i=>i.done).length;
-      countEl.textContent = items.length ? `${doneCount}/${items.length} 完了` : '';
-    }
-
-    function addItem(){
-      const text = inputEl.value.trim();
-      if(!text) return;
-      items.push({
-        id: Date.now()+'-'+Math.random().toString(36).slice(2),
-        text,
-        date: dateEl.value || '',
-        done: false
-      });
-      save(); render();
-      inputEl.value = '';
-      dateEl.value = '';
-      inputEl.focus();
-    }
-
-    document.getElementById('deadline-add').addEventListener('click', addItem);
-    inputEl.addEventListener('keydown', e => {
-      if(e.key==='Enter'){ e.preventDefault(); addItem(); }
-    });
-
-    (function(){
-      let pending=false, timer=null;
-      const btn = document.getElementById('deadline-clear');
-      btn.addEventListener('click', ()=>{
-        if(!pending){
-          pending=true;
-          btn.textContent='もう一度タップで確定';
-          btn.style.color='var(--vermillion)';
-          timer=setTimeout(()=>{ pending=false; btn.textContent='リストをクリア'; btn.style.color=''; },3000);
-        } else {
-          clearTimeout(timer); pending=false;
-          btn.textContent='リストをクリア'; btn.style.color='';
-          items=[]; save(); render();
-        }
-      });
-    })();
-
-    load();
-  })();
-
-  // ---- エンタメ ----
-  (function(){
-    const STORAGE_KEY = 'entame-list-data';
-    let items = [];
-    let selectedCat = '映画';
-    let selectedFilter = 'all';
-
-    const listEl   = document.getElementById('entame-list');
-    const inputEl  = document.getElementById('entame-input');
-    const countEl  = document.getElementById('entame-count');
-
-    function load(){
-      try{
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if(raw){
-          const parsed = JSON.parse(raw);
-          if(Array.isArray(parsed)) items = parsed;
-        }
-      }catch(err){}
-      render();
-    }
-
-    function save(){
-      try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); }catch(err){}
-    }
-
-    function render(){
-      listEl.innerHTML = '';
-      const visible = selectedFilter === 'all'
-        ? items
-        : items.filter(i => i.cat === selectedFilter);
-
-      if(visible.length === 0){
-        const hint = document.createElement('div');
-        hint.className = 'todo-empty-hint';
-        hint.textContent = visible.length === 0 && items.length === 0
-          ? 'カテゴリを選んでタイトルを追加してください'
-          : 'このカテゴリにはまだ何もありません';
-        listEl.appendChild(hint);
-      }
-
-      visible.forEach(item => {
-        const row = document.createElement('div');
-        row.className = 'todo-row' + (item.done ? ' done' : '');
-
-        const stampWrap = document.createElement('div');
-        stampWrap.className = 'todo-stamp-wrap';
-        if(item.done){
-          const stamp = document.createElement('div');
-          stamp.className = 'stamp-mark small';
-          stamp.textContent = '済';
-          stamp.addEventListener('click', () => { item.done=false; save(); render(); });
-          stampWrap.appendChild(stamp);
-        } else {
-          const btn = document.createElement('button');
-          btn.className = 'stamp-btn small';
-          btn.textContent = '印';
-          btn.addEventListener('click', () => { item.done=true; save(); render(); });
-          stampWrap.appendChild(btn);
-        }
-        row.appendChild(stampWrap);
-
-        const tag = document.createElement('span');
-        tag.className = `entame-cat-tag cat-tag-${item.cat}`;
-        tag.textContent = item.cat;
-        row.appendChild(tag);
-
-        const text = document.createElement('div');
-        text.className = 'todo-text';
-        text.textContent = item.text;
-        row.appendChild(text);
-
-        const del = document.createElement('button');
-        del.className = 'todo-del';
-        del.textContent = '×';
-        del.addEventListener('click', () => {
-          items = items.filter(i => i.id !== item.id);
-          save(); render();
-        });
-        row.appendChild(del);
-
-        listEl.appendChild(row);
-      });
-
-      const total = items.length;
-      const done  = items.filter(i=>i.done).length;
-      countEl.textContent = total ? `${done}/${total} 完了` : '';
-    }
-
-    // カテゴリボタン
-    document.querySelectorAll('.cat-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        selectedCat = btn.dataset.cat;
-        document.querySelectorAll('.cat-btn').forEach(b =>
-          b.classList.toggle('active', b.dataset.cat === selectedCat));
-        inputEl.focus();
-      });
-    });
-
-    // フィルターボタン
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        selectedFilter = btn.dataset.filter;
-        document.querySelectorAll('.filter-btn').forEach(b =>
-          b.classList.toggle('active', b.dataset.filter === selectedFilter));
-        render();
-      });
-    });
-
-    function addItem(){
-      const text = inputEl.value.trim();
-      if(!text) return;
-      items.push({
-        id: Date.now()+'-'+Math.random().toString(36).slice(2),
-        text,
-        cat: selectedCat,
-        done: false
-      });
-      save(); render();
-      inputEl.value = '';
-      inputEl.focus();
-    }
-
-    document.getElementById('entame-add').addEventListener('click', addItem);
-    inputEl.addEventListener('keydown', e => {
-      if(e.key==='Enter'){ e.preventDefault(); addItem(); }
-    });
-
-    (function(){
-      let pending=false, timer=null;
-      const btn = document.getElementById('entame-clear');
-      btn.addEventListener('click', ()=>{
-        if(!pending){
-          pending=true;
-          btn.textContent='もう一度タップで確定';
-          btn.style.color='var(--vermillion)';
-          timer=setTimeout(()=>{ pending=false; btn.textContent='リストをクリア'; btn.style.color=''; },3000);
-        } else {
-          clearTimeout(timer); pending=false;
-          btn.textContent='リストをクリア'; btn.style.color='';
-          items=[]; save(); render();
-        }
-      });
-    })();
-
-    load();
-  })();
-
-  // ---- データの書き出し / 読み込み(Chrome→Safariなど、ブラウザ間の移行用) ----
-  (function(){
-    const ALL_KEYS = [
-      'bingo-size',
-      'board-state-3x3','board-state-4x4','board-state-5x5',
-      'active-tab',
-      'daily-list-data','weekly-list-data','monthly-list-data','yearly-list-data',
-      'numbered-list-data',
-      'someday-list-data',
-      'waiting-list-data',
-      'deadline-list-data',
-      'entame-list-data'
-    ];
-
-    const exportBtn = document.getElementById('exportBtn');
-    const importBtn = document.getElementById('importBtn');
-    const area = document.getElementById('backupArea');
-    const status = document.getElementById('backupStatus');
-
-    exportBtn.addEventListener('click', () => {
-      const data = {};
-      ALL_KEYS.forEach(k => {
-        const v = localStorage.getItem(k);
-        if(v !== null) data[k] = v;
-      });
-      const json = JSON.stringify(data);
-      area.value = json;
-      area.style.display = 'block';
-      area.focus();
-      area.select();
-      if(navigator.clipboard && navigator.clipboard.writeText){
-        navigator.clipboard.writeText(json).then(() => {
-          status.textContent = 'コピーしました。移したい方のブラウザで貼り付けてください';
-        }).catch(() => {
-          status.textContent = '選択済みです。このまま手動でコピーしてください';
-        });
-      } else {
-        status.textContent = '選択済みです。このまま手動でコピーしてください';
-      }
-    });
-
-    importBtn.addEventListener('click', () => {
-      if(area.style.display !== 'block' || !area.value.trim()){
-        area.style.display = 'block';
-        area.value = '';
-        area.focus();
-        status.textContent = '貼り付けたら、もう一度「データを読み込む」を押してください';
-        return;
-      }
-      try{
-        const data = JSON.parse(area.value.trim());
-        Object.keys(data).forEach(k => {
-          if(ALL_KEYS.includes(k)) localStorage.setItem(k, data[k]);
-        });
-        status.textContent = '読み込みました。画面を更新します…';
-        setTimeout(() => location.reload(), 800);
-      }catch(err){
-        status.textContent = '読み込みに失敗しました。データが正しく貼り付けられているか確認してください';
-      }
-    });
-  })();
-
+  btns.forEach(btn=>btn.addEventListener('click',()=>switchTab(btn.dataset.tab)));
+  const saved=appData.settings&&appData.settings.activeTab;
+  if(saved&&btns.some(b=>b.dataset.tab===saved))switchTab(saved);
+}
+
+// ---- Init app ----
+function initApp(){
+  renderDate();
+  renderAllBoards();
+  createTodoList('daily','daily-list','daily-input','daily-add','daily-clear','daily-count');
+  createTodoList('weekly','weekly-list','weekly-input','weekly-add','weekly-clear','weekly-count');
+  createTodoList('monthly','monthly-list','monthly-input','monthly-add','monthly-clear','monthly-count');
+  createTodoList('yearly','yearly-list','yearly-input','yearly-add','yearly-clear','yearly-count');
+  createTodoList('someday','someday-list','someday-input','someday-add','someday-clear','someday-count');
+  createTodoList('waiting','waiting-list','waiting-input','waiting-add','waiting-clear','waiting-count');
+  initNumberedList();
+  initDeadlineList();
+  initEntameList();
+  initTabs();
+}
 </script>
-
 </body>
 </html>
