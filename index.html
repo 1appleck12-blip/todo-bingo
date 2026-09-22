@@ -413,21 +413,47 @@ function scheduleSave(key){
 
 // ---- Auth ----
 document.getElementById('google-login-btn').addEventListener('click',()=>{
+  const btn=document.getElementById('google-login-btn');
+  btn.textContent='ログイン中...';btn.disabled=true;
   const provider=new firebase.auth.GoogleAuthProvider();
-  auth.signInWithRedirect(provider).catch(e=>{ alert('ログインに失敗しました: '+e.message); });
+  auth.signInWithRedirect(provider).catch((e)=>{
+    btn.textContent='Googleでログイン';btn.disabled=false;
+    alert('ログインエラー: '+e.message);
+  });
 });
 document.getElementById('logout-btn').addEventListener('click',()=>{ auth.signOut(); });
 
+let appInitialized=false;
+
+async function initUserSession(user){
+  if(appInitialized)return;
+  appInitialized=true;
+  currentUser=user;
+  document.getElementById('user-name').textContent=user.displayName||user.email;
+  if(user.photoURL)document.getElementById('user-avatar').src=user.photoURL;
+  await loadAllData();
+  showApp();
+}
+
+// リダイレクト後の結果を処理（Safari対応）
+auth.getRedirectResult().then(async(result)=>{
+  if(result&&result.user){
+    await initUserSession(result.user);
+  }
+}).catch((e)=>{
+  console.error('redirect result error',e);
+});
+
 auth.onAuthStateChanged(async(user)=>{
   if(user){
-    currentUser=user;
-    document.getElementById('user-name').textContent=user.displayName||user.email;
-    if(user.photoURL) document.getElementById('user-avatar').src=user.photoURL;
-    await loadAllData();
-    showApp();
+    // getRedirectResultより少し遅れて呼ばれる場合もある
+    setTimeout(async()=>{
+      if(!appInitialized) await initUserSession(user);
+    },500);
   } else {
-    currentUser=null;
-    showLogin();
+    setTimeout(()=>{
+      if(!appInitialized) showLogin();
+    },1000);
   }
 });
 
