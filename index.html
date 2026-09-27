@@ -107,6 +107,11 @@ h1{font-family:'Shippori Mincho',serif;font-weight:700;font-size:28px;margin:2px
 .todo-del{flex:none;width:26px;height:26px;border-radius:50%;border:none;background:none;color:var(--ink-soft);font-size:16px;line-height:1;cursor:pointer;transition:color .15s,transform .15s;}
 .todo-del:hover{color:var(--vermillion);}
 .todo-del:active{transform:scale(.85);}
+.move-btn{flex:none;width:24px;height:24px;border-radius:50%;border:1px solid var(--line);background:none;color:var(--ink-soft);font-size:13px;line-height:1;cursor:pointer;transition:color .15s,background .15s;}
+.move-btn:active{background:var(--indigo);color:var(--paper);border-color:var(--indigo);}
+.move-popup{position:absolute;right:0;top:calc(100% + 4px);z-index:200;background:#fffdf8;border:1px solid var(--line);border-radius:10px;padding:8px;display:flex;flex-wrap:wrap;gap:5px;min-width:180px;box-shadow:0 4px 16px rgba(0,0,0,.12);}
+.move-popup-btn{font-family:'JetBrains Mono',monospace;font-size:11px;padding:5px 10px;border:1px solid var(--line);border-radius:999px;background:transparent;color:var(--ink);cursor:pointer;white-space:nowrap;}
+.move-popup-btn:active{background:var(--indigo);color:var(--paper);border-color:var(--indigo);}
 .todo-footer-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;gap:8px;}
 .todo-count{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-soft);}
 .todo-empty-hint{font-size:12px;color:var(--ink-soft);text-align:center;padding:24px 0;opacity:.65;}
@@ -396,6 +401,36 @@ document.addEventListener('visibilitychange',()=>{
     });
   }
 });
+
+// ---- 移動機能 ----
+const tabRenderers={};
+let activeMovePopup=null;
+const TAB_LABELS={daily:'Daily',weekly:'Weekly',monthly:'Monthly',yearly:'Yearly',numbered:'リスト',someday:'いつか',deadline:'期限付き',waiting:'時がきたら',entame:'エンタメ'};
+function doMoveItem(fromKey,item,toKey){
+  appData[fromKey].items=appData[fromKey].items.filter(i=>i.id!==item.id);
+  const newItem={id:Date.now()+'-'+Math.random().toString(36).slice(2),text:item.text,done:false};
+  if(toKey==='deadline')newItem.date='';
+  if(toKey==='entame')newItem.cat='その他';
+  if(!appData[toKey])appData[toKey]={items:[]};
+  if(!appData[toKey].items)appData[toKey].items=[];
+  appData[toKey].items.push(newItem);
+  scheduleSave(fromKey);scheduleSave(toKey);
+  if(tabRenderers[fromKey])tabRenderers[fromKey]();
+  if(tabRenderers[toKey])tabRenderers[toKey]();
+}
+function showMovePopup(btn,fromKey,item){
+  if(activeMovePopup){activeMovePopup.remove();activeMovePopup=null;return;}
+  const popup=document.createElement('div');popup.className='move-popup';
+  Object.keys(TAB_LABELS).filter(k=>k!==fromKey).forEach(toKey=>{
+    const b=document.createElement('button');b.className='move-popup-btn';b.textContent=TAB_LABELS[toKey];
+    b.addEventListener('click',e=>{e.stopPropagation();doMoveItem(fromKey,item,toKey);popup.remove();activeMovePopup=null;});
+    popup.appendChild(b);
+  });
+  const wrap=btn.closest('.todo-row,.numbered-row');
+  if(wrap){wrap.style.position='relative';wrap.appendChild(popup);}
+  activeMovePopup=popup;
+  setTimeout(()=>{document.addEventListener('click',function cl(){popup.remove();activeMovePopup=null;document.removeEventListener('click',cl);},{once:true});},0);
+}
 
 // ---- Auth (Email/Password) ----
 function setLoginError(msg){
@@ -714,6 +749,7 @@ function createTodoList(key,listId,inputId,addBtnId,clearBtnId,countId){
       row.appendChild(sw);
       const text=document.createElement('div');text.className='todo-text';text.textContent=item.text;row.appendChild(text);
       const del=document.createElement('button');del.className='todo-del';del.textContent='×';del.addEventListener('click',()=>{appData[key].items=appData[key].items.filter(i=>i.id!==item.id);render();scheduleSave(key);});row.appendChild(del);
+      const mv=document.createElement('button');mv.className='move-btn';mv.title='別のリストへ移動';mv.textContent='↗';mv.addEventListener('click',e=>{e.stopPropagation();showMovePopup(mv,key,item);});row.appendChild(mv);
       listEl.appendChild(row);
     });
     if(countEl){const done=items.filter(i=>i.done).length;countEl.textContent=items.length?`${done}/${items.length} 完了`:''; }
@@ -725,6 +761,7 @@ function createTodoList(key,listId,inputId,addBtnId,clearBtnId,countId){
   }
   document.getElementById(addBtnId).addEventListener('click',addItem);
   inputEl.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addItem();}});
+  tabRenderers[key]=render;
   (function(){let p=false,t=null;const btn=document.getElementById(clearBtnId);btn.addEventListener('click',()=>{
     if(!p){p=true;btn.textContent='もう一度タップで確定';btn.style.color='var(--vermillion)';t=setTimeout(()=>{p=false;btn.textContent='リストをクリア';btn.style.color='';},3000);}
     else{clearTimeout(t);p=false;btn.textContent='リストをクリア';btn.style.color='';appData[key].items=[];render();scheduleSave(key);}
@@ -748,11 +785,13 @@ function initNumberedList(){
       db2.addEventListener('click',()=>{item.done=!item.done;render();scheduleSave('numbered');});row.appendChild(db2);
       const del=document.createElement('button');del.className='numbered-del';del.textContent='×';del.title='削除して繰り上げる';
       del.addEventListener('click',()=>{appData.numbered.items.splice(pos,1);render();scheduleSave('numbered');});row.appendChild(del);
+      const mv=document.createElement('button');mv.className='move-btn';mv.title='別のリストへ移動';mv.textContent='↗';mv.addEventListener('click',e=>{e.stopPropagation();showMovePopup(mv,'numbered',item);});row.appendChild(mv);
       listEl.appendChild(row);
     });
     const done=items.filter(i=>i.done).length;countEl.textContent=items.length?`${done}/${items.length} 完了`:'';
   }
   function addItem(){const text=inputEl.value.trim();if(!text)return;appData.numbered.items.push({id:Date.now()+'-'+Math.random().toString(36).slice(2),text,done:false});render();scheduleSave('numbered');inputEl.value='';inputEl.focus();}
+  tabRenderers['numbered']=render;
   document.getElementById('numbered-add').addEventListener('click',addItem);
   inputEl.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addItem();}});
   (function(){let p=false,t=null;const btn=document.getElementById('numbered-clear');btn.addEventListener('click',()=>{
@@ -787,11 +826,13 @@ function initDeadlineList(){
       if(item.date&&!item.done){const info=dateLabel(item.date);if(info){const chip=document.createElement('span');chip.className='deadline-chip'+(info.cls?' '+info.cls:'');chip.textContent=info.text;tw.appendChild(chip);}}
       row.appendChild(tw);
       const del=document.createElement('button');del.className='todo-del';del.textContent='×';del.addEventListener('click',()=>{appData.deadline.items=appData.deadline.items.filter(i=>i.id!==item.id);render();scheduleSave('deadline');});row.appendChild(del);
+      const mv=document.createElement('button');mv.className='move-btn';mv.title='別のリストへ移動';mv.textContent='↗';mv.addEventListener('click',e=>{e.stopPropagation();showMovePopup(mv,'deadline',item);});row.appendChild(mv);
       listEl.appendChild(row);
     });
     const done=items.filter(i=>i.done).length;countEl.textContent=items.length?`${done}/${items.length} 完了`:'';
   }
   function addItem(){const text=inputEl.value.trim();if(!text)return;appData.deadline.items.push({id:Date.now()+'-'+Math.random().toString(36).slice(2),text,date:dateEl.value||'',done:false});render();scheduleSave('deadline');inputEl.value='';dateEl.value='';inputEl.focus();}
+  tabRenderers['deadline']=render;
   document.getElementById('deadline-add').addEventListener('click',addItem);
   inputEl.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addItem();}});
   (function(){let p=false,t=null;const btn=document.getElementById('deadline-clear');btn.addEventListener('click',()=>{
@@ -820,6 +861,7 @@ function initEntameList(){
       const tag=document.createElement('span');tag.className=`entame-cat-tag cat-tag-${item.cat}`;tag.textContent=item.cat;row.appendChild(tag);
       const text=document.createElement('div');text.className='todo-text';text.textContent=item.text;row.appendChild(text);
       const del=document.createElement('button');del.className='todo-del';del.textContent='×';del.addEventListener('click',()=>{appData.entame.items=appData.entame.items.filter(i=>i.id!==item.id);render();scheduleSave('entame');});row.appendChild(del);
+      const mv=document.createElement('button');mv.className='move-btn';mv.title='別のリストへ移動';mv.textContent='↗';mv.addEventListener('click',e=>{e.stopPropagation();showMovePopup(mv,'entame',item);});row.appendChild(mv);
       listEl.appendChild(row);
     });
     const done=items.filter(i=>i.done).length;countEl.textContent=items.length?`${done}/${items.length} 完了`:'';
@@ -827,6 +869,7 @@ function initEntameList(){
   document.querySelectorAll('.cat-btn').forEach(btn=>{btn.addEventListener('click',()=>{selectedCat=btn.dataset.cat;document.querySelectorAll('.cat-btn').forEach(b=>b.classList.toggle('active',b.dataset.cat===selectedCat));inputEl.focus();});});
   document.querySelectorAll('.filter-btn').forEach(btn=>{btn.addEventListener('click',()=>{selectedFilter=btn.dataset.filter;document.querySelectorAll('.filter-btn').forEach(b=>b.classList.toggle('active',b.dataset.filter===selectedFilter));render();});});
   function addItem(){const text=inputEl.value.trim();if(!text)return;appData.entame.items.push({id:Date.now()+'-'+Math.random().toString(36).slice(2),text,cat:selectedCat,done:false});render();scheduleSave('entame');inputEl.value='';inputEl.focus();}
+  tabRenderers['entame']=render;
   document.getElementById('entame-add').addEventListener('click',addItem);
   inputEl.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addItem();}});
   (function(){let p=false,t=null;const btn=document.getElementById('entame-clear');btn.addEventListener('click',()=>{
