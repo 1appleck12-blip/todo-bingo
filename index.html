@@ -334,8 +334,7 @@ const firebaseConfig={
 firebase.initializeApp(firebaseConfig);
 const auth=firebase.auth();
 const db=firebase.firestore();
-// オフラインキャッシュ有効化：書き込みをまずIndexedDBに保存→後で同期
-db.enablePersistence().catch(()=>{});
+// ※ストレージ不足の端末でenablePersistenceは使わない（Firestoreが壊れる）
 
 // ---- App state ----
 let currentUser=null;
@@ -484,17 +483,22 @@ async function initUserSession(user){
   if(appInitialized)return;
   appInitialized=true;
   currentUser=user;
-  document.getElementById('user-name').textContent=user.displayName||user.email;
-  if(user.photoURL)document.getElementById('user-avatar').src=user.photoURL;
-  await loadAllData();
-  showApp();
+  try{
+    document.getElementById('user-name').textContent=user.displayName||user.email;
+    if(user.photoURL)document.getElementById('user-avatar').src=user.photoURL;
+    await loadAllData();
+    showApp();
+  }catch(e){
+    console.error('initUserSession error',e);
+    document.getElementById('loading-screen').innerHTML='<div style="padding:32px;text-align:center;color:#B5392C;font-family:sans-serif;">エラーが発生しました。<br>'+e.message+'<br><br><button onclick="location.reload()" style="padding:10px 20px;font-size:14px;">再読み込み</button></div>';
+  }
 }
 
 auth.onAuthStateChanged(async(user)=>{
   if(user){
     setTimeout(async()=>{
       if(!appInitialized) await initUserSession(user);
-    },300);
+    },100);
   } else {
     setTimeout(()=>{
       if(!appInitialized) showLogin();
@@ -503,21 +507,23 @@ auth.onAuthStateChanged(async(user)=>{
 });
 
 async function loadAllData(){
-  // まずlocalStorageから即時読み込み（オフラインでも動く）
+  // localStorageから読み込み（空き容量がある場合のみ成功）
   loadFromLocal();
-  // FirestoreからはlocalStorageより新しいデータがあれば上書き
+  // Firestoreからネットワーク経由で読み込み
   try{
-    const snapshot=await db.collection('users').doc(currentUser.uid).collection('appdata').get();
+    const snapshot=await db.collection('users').doc(currentUser.uid).collection('appdata').get({source:'server'});
     if(!snapshot.empty){
       snapshot.forEach(doc=>{ appData[doc.id]=doc.data(); });
-      // Firestoreのデータが正として、localStorageも更新
       try{
         const bk={};
         snapshot.forEach(doc=>{bk[doc.id]=doc.data();});
         localStorage.setItem(LS_KEY,JSON.stringify(bk));
       }catch(e){}
     }
-  }catch(e){ console.error('Firestore load failed, using local backup',e); }
+  }catch(e){
+    // ネットワーク失敗 → localStorageのデータで続行
+    console.error('Firestore load failed',e);
+  }
 }
 
 function showLogin(){
@@ -529,7 +535,10 @@ function showApp(){
   document.getElementById('loading-screen').style.display='none';
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').style.display='block';
-  initApp();
+  try{ initApp(); }catch(e){
+    document.getElementById('app').innerHTML='<div style="padding:32px;text-align:center;color:#B5392C;">初期化エラー: '+e.message+'<br><br><button onclick="location.reload()" style="padding:10px 20px;font-size:14px;">再読み込み</button></div>';
+    console.error('initApp error',e);
+  }
 }
 
 // ---- Date ----
@@ -635,7 +644,9 @@ function createBoardCard(boardData){
     btn.textContent=`${n}×${n}`;
     btn.addEventListener('click',()=>{
       if(boardData.size===n)return;
-      boardData.size=n;boardData.cells=Array.from({length:n*n},()=>({text:'',done:false}));
+      const old=boardData.cells||[];
+      boardData.size=n;
+      boardData.cells=Array.from({length:n*n},(_,i)=>old[i]||{text:'',done:false});
       sizeSw.querySelectorAll('.size-btn').forEach(b=>b.classList.toggle('active',parseInt(b.textContent)===n));
       buildSvgLines(svgEl,n);rerenderBoard();scheduleSave('bingo');
     });
